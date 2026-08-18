@@ -102,7 +102,7 @@ const CONFIG = {
   TILE_FADE: [5.7, 7.0],
 
   /* --- ambient traffic (the cold open) ------------------------------------ */
-  AMBIENT_COUNT: 26,
+  AMBIENT_COUNT: 24,
   AMBIENT_SPEED: 0.055,     // fraction of route per second
 
   /* --- hero flights -------------------------------------------------------- */

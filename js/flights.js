@@ -118,11 +118,17 @@ const Flights = (function () {
 
   function spawnAmbient(atRandomProgress) {
     const pair = AMBIENT_ROUTES[(Math.random() * AMBIENT_ROUTES.length) | 0];
-    const seg = route(pair[0], pair[1], (Math.random() - 0.5) * 1.6, 48);
+    /* A wide spread of arc offsets. Most of the idle routes end at SEA, and
+       flown as exact great circles they'd all converge into one stack of
+       aircraft on the same final approach with their labels piled on top of
+       each other. Real arrivals come in off different tracks; this does the
+       same, and keeps the scope looking busy rather than queued. */
+    const seg = route(pair[0], pair[1], (Math.random() - 0.5) * 5, 48);
     return {
       callsign: randomCallsign(),
       seg: seg,
-      p: atRandomProgress ? Math.random() * 0.92 : 0,
+      /* Never start one on top of its destination, for the same reason. */
+      p: atRandomProgress ? Math.random() * 0.8 : 0,
       speed: CONFIG.AMBIENT_SPEED * (0.7 + Math.random() * 0.7),
       fade: 1
     };
