@@ -1,0 +1,33 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flight Radar</title>
+<link rel="stylesheet" href="css/style.css">
+
+<!--
+  Ceiling projection: a dark flight radar over Puget Sound that opens out to
+  the world. Space (or a tap) runs the sequence.
+
+  Everything loads from disk, no network. Basemap tiles (c) OpenStreetMap
+  contributors, (c) CARTO. Boundaries from Natural Earth (public domain).
+-->
+
+<canvas id="scope"></canvas>
+<div id="vignette"></div>
+<div id="title">
+  <div id="title-line1"></div>
+  <div id="title-line2"></div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="data/world.js"></script>
+<script src="tiles/manifest.js"></script>
+<script src="js/geo.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/labels.js"></script>
+<script src="js/tiles.js"></script>
+<script src="js/worldlayer.js"></script>
+<script src="js/radar.js"></script>
+<script src="js/flights.js"></script>
+<script src="js/airports.js"></script>
+<script src="js/sequence.js"></script>
+<script src="js/main.js"></script>
