@@ -44,10 +44,10 @@
     /* s.dim pulls the whole map back under the title card. */
     WorldLayer.draw(ctx, s.map * s.dim);
     Tiles.draw(ctx, s.map * s.dim);
-    Radar.draw(ctx, s.dim);
+    Radar.draw(ctx, s.radar * s.dim);
 
     /* Airport codes claim their label slots before any aircraft do. */
-    Labels.begin();
+    Labels.begin(dt);
     Airports.draw(ctx, heroT, s.dim, s.hero * s.dim);
     Flights.drawAmbient(ctx, s.ambient * s.dim);
     Flights.drawHero(ctx, heroT, s.hero * s.dim);

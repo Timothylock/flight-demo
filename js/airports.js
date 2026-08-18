@@ -63,7 +63,7 @@ const Airports = (function () {
     ctx.globalAlpha = alpha * (origin ? 1 : 0.92);
     ctx.letterSpacing = '1.5px';
     const lx = x + 12;
-    const ly = Labels.place(lx, y - 3, ctx.measureText(code).width, 16);
+    const ly = Labels.place('ap:' + code, lx, y - 3, ctx.measureText(code).width, 16);
     /* A leader line, once the label has been pushed clear of the marker. */
     if (Math.abs(ly - (y - 2.5)) > 9) {
       ctx.save();

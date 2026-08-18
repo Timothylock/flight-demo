@@ -102,8 +102,8 @@ const CONFIG = {
   TILE_FADE: [5.7, 7.0],
 
   /* --- ambient traffic (the cold open) ------------------------------------ */
-  AMBIENT_COUNT: 24,
-  AMBIENT_SPEED: 0.055,     // fraction of route per second
+  AMBIENT_COUNT: 5,
+  AMBIENT_SPEED: 0.018,     // fraction of route per second -- a slow drift
 
   /* --- hero flights -------------------------------------------------------- */
   HERO_BOW: 0.9,            // slight per-flight arc offset so shared legs fan apart

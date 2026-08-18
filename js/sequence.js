@@ -19,7 +19,8 @@ const Sequence = (function () {
     ambient: 1,
     hero: 0,
     title: 0,
-    dim: 1                // everything under the title card fades back a little
+    dim: 1,               // everything under the title card fades back a little
+    radar: 1              // the sweep: cold open only
   };
 
   function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
@@ -73,6 +74,7 @@ const Sequence = (function () {
     state.hero = 0;
     state.title = 0;
     state.dim = 1;
+    state.radar = 1;
     Flights.clearHero();
     Flights.buildAmbient();
     Airports.reset();
@@ -117,6 +119,10 @@ const Sequence = (function () {
       state.hero = 1;
       state.title = smooth(ramp(t, B.titleFadeIn[0] * SEQ, B.titleFadeIn[1] * SEQ));
 
+      /* The sweep is the waiting state. Once the map is up it has done its
+         job, and a line rotating over the departures just fights them. */
+      state.radar = 1 - smooth(ramp(t, B.mapFadeIn[0] * SEQ, B.mapFadeIn[1] * SEQ));
+
       Flights.updateAmbient(dt, state.ambient > 0.01);
       Flights.updateHero(t, function (code) { Airports.reveal(code, t); });
 
@@ -135,6 +141,7 @@ const Sequence = (function () {
     if (state.phase === 'HOLD') {
       state.title = 1;
       state.dim = CONFIG.TITLE_DIM;
+      state.radar = 0;
       lerpCamera(worldView(), worldView(), 1);
       if (state.t >= CONFIG.HOLD_SECONDS) {
         state.phase = 'RESET';
@@ -152,6 +159,8 @@ const Sequence = (function () {
       state.hero = 1 - smooth(ramp(t, 0.08, 0.45));
       state.map = 1 - smooth(ramp(t, 0.55, 1.00));
       state.ambient = smooth(ramp(t, 0.62, 1.00));
+      /* Sweep comes back with the black, as the cold open reassembles. */
+      state.radar = smooth(ramp(t, 0.60, 1.00));
 
       Flights.updateAmbient(dt, true);
       lerpCamera(worldView(), homeView(), easeInOutCubic(clamp01(t / 0.88)));

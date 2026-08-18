@@ -71,7 +71,7 @@ const Flights = (function () {
 
   /* `stack` keeps the two lines of a hero label together: the second line asks
      for the slot directly under wherever the first one ended up. */
-  function drawLabel(ctx, x, y, text, alpha, color, size, stack) {
+  function drawLabel(ctx, key, x, y, text, alpha, color, size, stack) {
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.font = (size || 11) + 'px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
@@ -81,7 +81,7 @@ const Flights = (function () {
     ctx.shadowBlur = 4;
     ctx.fillStyle = color;
     const ly = stack !== undefined ? stack
-                                   : Labels.place(x, y, ctx.measureText(text).width, size + 3);
+                                   : Labels.place(key, x, y, ctx.measureText(text).width, size + 3);
     ctx.fillText(text, x, ly);
     ctx.restore();
     return ly;
@@ -175,8 +175,8 @@ const Flights = (function () {
       if (!Camera.onScreen(p, 120)) continue;
       drawPlane(ctx, p.x, p.y, at.heading, CONFIG.PLANE_SIZE,
                 CONFIG.COLORS.ambient, opacity * 0.82, 4);
-      drawLabel(ctx, p.x + 12, p.y - 12, f.callsign, opacity * 0.6,
-                CONFIG.COLORS.label, 11);
+      drawLabel(ctx, 'am:' + f.callsign, p.x + 12, p.y - 12, f.callsign,
+                opacity * 0.6, CONFIG.COLORS.label, 11);
     }
   }
 
@@ -337,9 +337,9 @@ const Flights = (function () {
                 CONFIG.COLORS.hero, alpha, 6);
 
       const dest = f.stops[f.stops.length - 1];
-      const ly = drawLabel(ctx, p.x + 14, p.y - 15, f.callsign, alpha * 0.95,
-                           CONFIG.COLORS.heroLabel, 12);
-      drawLabel(ctx, p.x + 14, p.y - 3, f.stops[st.legIndex] + '→' + dest,
+      const ly = drawLabel(ctx, 'hi:' + f.callsign, p.x + 14, p.y - 15, f.callsign,
+                           alpha * 0.95, CONFIG.COLORS.heroLabel, 12);
+      drawLabel(ctx, null, p.x + 14, p.y - 3, f.stops[st.legIndex] + '→' + dest,
                 alpha * 0.55, CONFIG.COLORS.label, 10, ly + 12);
     }
   }
