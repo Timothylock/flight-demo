@@ -61,6 +61,10 @@
       const t4 = Sequence.state.phase === 'ACT4' ? Sequence.state.t : CONFIG.ACT4_SECONDS;
       Act4.draw(ctx, t4, s.act4);
     }
+    if (s.finale > 0.004) {
+      const tf = Sequence.state.phase === 'FINALE' ? Sequence.state.t : Finale.duration();
+      Finale.draw(ctx, tf, s.finale);
+    }
 
     Narration.update(heroT, s.narration);
     titleEl.style.opacity = s.title;

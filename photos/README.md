@@ -28,6 +28,15 @@ detail in the corners.
 One per dice roll, shown large in the middle of the board with the property
 name and a line underneath.
 
+## The finale
+
+    finale.jpg
+
+One photograph, alone on black, held for ten seconds with a single line under
+it. It is the last thing seen before the radar comes back, so it wants to be
+the best one -- and a bright one: everything around it is black, and a dark
+photo reads as an empty frame.
+
 ## All acts
 
 Frames are 4:3 landscape. Photos are cropped to fill without distorting, so

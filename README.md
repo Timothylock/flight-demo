@@ -5,8 +5,9 @@ Puget Sound with live-looking traffic into SEA and PAE. Press space and the map
 comes up, that traffic clears out, and a bank of flights leaves Seattle and
 Paine Field for the world — the camera pulling back with them, each destination
 lighting up with its airport code as its flight arrives. It holds on the
-finished map with a title card, then drifts home and waits for you to press
-again.
+finished map with a title card, then runs the scrapbook, the water and the
+board, closes on one photograph held in the dark, and drifts back to the cold
+open to wait for you to press again.
 
 ## Running it
 
@@ -71,6 +72,11 @@ Every other beat is a fraction of it, so changing that one number retimes the
 piece -- narration included. `HOLD_SECONDS` is how long the finished frame sits
 before resetting.
 
+**The last frame.** `CONFIG.FINALE` is the closing beat: one filename, one
+line, and `fadeIn` / `hold` / `fadeOut` in seconds. Drop `photos/finale.jpg` in
+and rewrite the line -- the one in the repo is a placeholder like the rest of
+the script.
+
 **The camera** follows the network rather than a stopwatch: it fits whatever
 has been reached so far, plus anything airborne, so the frame always holds what
 the narration is talking about. It converges on the final view for free -- once
@@ -111,6 +117,7 @@ as a stutter the entire way out.
 | `js/act2.js` | the scrapbook act: flights, camera ramp, arrivals |
 | `js/act3.js` | the water: perspective, bubbles, Snell's window |
 | `js/act4.js` | the board: tiles, dice, tokens |
+| `js/finale.js` | the last photograph and the hold |
 | `js/ledboard.js` | the dot-matrix flight board |
 | `js/scrapbook.js` | photograph frames pinned to the map |
 | `js/airports.js` | markers and their reveal |
@@ -139,10 +146,21 @@ tokens on the same square -- every roll stays an ordinary pair of dice and no
 token ever moves further than it threw. Because the second player lands on the
 first player's square, the last two reveals share a tile, which is the point.
 
-Board text turns on the left and right sides but stays upright on the top,
-bottom and corners. A real board faces each side's text at its own player,
-which leaves half of it upside down -- fine on a table with four people round
-it, wrong on a ceiling where there is one person and one orientation.
+Board text faces outward on all four sides, so the top row reads upside down
+exactly as it does on a real board -- that orientation is most of why a
+Monopoly board is recognisable from across a room, and nothing is lost by it
+because whatever a token lands on is spelled out upright in the middle anyway.
+The corners are the one exception: turned onto their diagonals, names as long
+as `CARBONITE` ran out of their own square, so the artwork sits on the diagonal
+and the word underneath stays level.
+
+The finale is the only moment in the piece with nothing moving. Act Four fades
+under a black field, one photograph comes up with a single line beneath it,
+and it holds -- `CONFIG.FINALE.hold`, ten seconds by default -- before fading
+out. Because it ends on black and the cold open begins on black, the reset that
+follows it doesn't fade the world out again: it brings the radar up from where
+the finale left the frame. Every other entry into the reset still fades from
+whatever was lit, which is what `resetFrom` in `js/sequence.js` remembers.
 
 Two details worth knowing if you change things:
 

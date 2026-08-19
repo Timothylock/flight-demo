@@ -532,23 +532,32 @@ CONFIG.ACT4 = {
   dir: 'photos/',
   boardScale: 0.93,
 
-  assembleSeconds: 3.4,     // board laying itself out
+  assembleSeconds: 3.9,     // board laying itself out
   surfaceSeconds: 1.3,      // the flash of breaking the surface
   finaleSeconds: 2.6,       // both tokens together at the end
-  rollSeconds: 1.15,        // dice tumbling before they settle
+  rollSeconds: 1.45,        // the throw: flying in, tumbling, settling
   hopSeconds: 0.115,        // per square
   revealFade: 0.55,
 
   colors: {
     backdrop:   '#050608',
-    board:      '#0c0f13',
+    board:      '#0a0d11',
+    boardCentre:'#12161d',
+    frame:      'rgba(190,205,222,0.30)',
+    cornerArt:  'rgba(215,226,238,0.55)',
     tile:       '#12161c',
     edge:       'rgba(255,255,255,0.13)',
     tileText:   '#c8d0da',
     cornerText: '#eef2f6',
     centreText: '#d5dde6',
-    die:        '#e9eef4',
-    pip:        '#12161c',
+    die:        '#f2f5f9',
+    dieEdge:    '#c3ccd6',
+    pip:        '#10141a',
+    stripeEdge: 'rgba(0,0,0,0.55)',
+    priceText:  '#7d8794',
+    deck:       '#171d25',
+    deckEdge:   'rgba(255,255,255,0.16)',
+    shadow:     'rgba(0,0,0,0.55)',
     tokenA:     '#ff5a5f',   // the sphere
     tokenB:     '#5ad2ff',   // the fighter
     frameEmpty: 'rgba(20,26,34,0.9)'
@@ -557,37 +566,37 @@ CONFIG.ACT4 = {
   /* Twenty-eight tiles, clockwise from the top-left corner. Colour groups
      alternate between the two worlds the whole way round. */
   tiles: [
-    { name: 'GO', corner: true },
-    { name: 'Pallet Town',    color: '#c9773f' },
-    { name: 'Viridian City',  color: '#c9773f' },
-    { name: 'Falcon',         color: '#8b95a3' },
-    { name: 'Tatooine',       color: '#ddb45e' },
-    { name: 'Jakku',          color: '#ddb45e' },
-    { name: 'Poke Center',    color: '#6f7d8c' },
+    { name: 'GO', corner: true, art: 'go' },
+    { name: 'Pallet Town',    color: '#c9773f', price: 60 },
+    { name: 'Viridian City',  color: '#c9773f', price: 60 },
+    { name: 'Falcon',         color: '#8b95a3', price: 200, art: 'ship' },
+    { name: 'Tatooine',       color: '#ddb45e', price: 100 },
+    { name: 'Jakku',          color: '#ddb45e', price: 100 },
+    { name: 'Poke Center',    color: '#6f7d8c', price: 150, art: 'util' },
 
-    { name: 'CARBONITE', corner: true },
-    { name: 'Cerulean City',  color: '#3fa2d8' },
-    { name: 'Vermilion City', color: '#3fa2d8' },
-    { name: 'Lapras',         color: '#8b95a3' },
-    { name: 'Hoth',           color: '#a6dcee' },
-    { name: 'Ilum',           color: '#a6dcee' },
-    { name: 'Chance',         color: '#6f7d8c' },
+    { name: 'CARBONITE', corner: true, art: 'jail' },
+    { name: 'Cerulean City',  color: '#3fa2d8', price: 140 },
+    { name: 'Vermilion City', color: '#3fa2d8', price: 140 },
+    { name: 'Lapras',         color: '#8b95a3', price: 200, art: 'ship' },
+    { name: 'Hoth',           color: '#a6dcee', price: 180 },
+    { name: 'Ilum',           color: '#a6dcee', price: 180 },
+    { name: 'Chance',         color: '#6f7d8c', art: 'chance' },
 
-    { name: 'CANTINA', corner: true },
-    { name: 'Lavender Town',  color: '#d06fa8' },
-    { name: 'Saffron City',   color: '#d06fa8' },
-    { name: 'X-Wing',         color: '#8b95a3' },
-    { name: 'Endor',          color: '#4fae5f' },
-    { name: 'Kashyyyk',       color: '#4fae5f' },
-    { name: 'Kyber Forge',    color: '#6f7d8c' },
+    { name: 'CANTINA', corner: true, art: 'parking' },
+    { name: 'Lavender Town',  color: '#d06fa8', price: 220 },
+    { name: 'Saffron City',   color: '#d06fa8', price: 220 },
+    { name: 'X-Wing',         color: '#8b95a3', price: 200, art: 'ship' },
+    { name: 'Endor',          color: '#4fae5f', price: 260 },
+    { name: 'Kashyyyk',       color: '#4fae5f', price: 260 },
+    { name: 'Kyber Forge',    color: '#6f7d8c', price: 150, art: 'util' },
 
-    { name: 'COMPACTOR', corner: true },
-    { name: 'Cinnabar Is.',   color: '#d8494e' },
-    { name: 'Indigo Plateau', color: '#d8494e' },
-    { name: 'Charizard',      color: '#8b95a3' },
-    { name: 'Coruscant',      color: '#7f8fd8' },
-    { name: 'Naboo',          color: '#7f8fd8' },
-    { name: 'Chance',         color: '#6f7d8c' }
+    { name: 'COMPACTOR', corner: true, art: 'gotojail' },
+    { name: 'Cinnabar Is.',   color: '#d8494e', price: 300 },
+    { name: 'Indigo Plateau', color: '#d8494e', price: 300 },
+    { name: 'Charizard',      color: '#8b95a3', price: 200, art: 'ship' },
+    { name: 'Coruscant',      color: '#7f8fd8', price: 350 },
+    { name: 'Naboo',          color: '#7f8fd8', price: 400 },
+    { name: 'Chance',         color: '#6f7d8c', art: 'chance' }
   ],
 
   /* One per roll: a photograph and a line. Order is fixed; which square they
@@ -599,4 +608,26 @@ CONFIG.ACT4 = {
     { photo: 'board-3.jpg', line: 'you always did pick the better piece' },
     { photo: 'board-4.jpg', line: 'same square, every time' }
   ]
+};
+
+/* ==========================================================================
+   THE FINALE -- one photograph, one line, held.
+
+   The only still moment in the piece. Everything before it moves; this does
+   not, which is the whole point of putting it last.
+   ========================================================================== */
+CONFIG.FINALE = {
+  dir: 'photos/',
+  photo: 'finale.jpg',
+  line: 'happy anniversary, my favourite person to go anywhere with',
+
+  fadeIn: 3.5,          // slow arrival out of the board
+  hold: 10,             // held, still
+  fadeOut: 3.5,         // down into the black the radar begins from
+
+  size: 0.52,           // photograph height as a fraction of the screen
+  aspect: 1.4,          // 7:5 landscape
+  drift: 0.035,         // barely-there push in over the hold
+  lineDelay: 0.55,      // the line arrives after the photograph settles
+  textColor: '#dfe6ee'
 };

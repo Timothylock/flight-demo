@@ -28,7 +28,8 @@ const Sequence = (function () {
     act2: 0,              // the scrapbook act
     board: 0,             // the LED flight board
     act3: 0,              // the water
-    act4: 0               // the board
+    act4: 0,              // the board
+    finale: 0             // the last photograph
   };
 
   function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
@@ -115,11 +116,25 @@ const Sequence = (function () {
     Camera.set(Geo.invMercY(cy), Geo.invMercX(cx), zoom);
   }
 
-  /* Enter the reset, remembering what was lit so it can fade from there. */
+  /* Enter the reset, remembering what was lit so it can fade from there.
+     Without this the reset assumed it was leaving the Act One title hold and
+     faded a full-strength title card back in over whatever was actually on
+     screen. */
   function beginReset() {
+    /* The finale has already taken the frame to black, and the radar starts
+       from black too -- so there is nothing to fade out, and pulling the map
+       back up just to fade it down again would flash. */
+    if (state.phase === 'FINALE') {
+      state.map = 0; state.hero = 0; state.title = 0;
+      state.act2 = 0; state.board = 0; state.act3 = 0; state.act4 = 0;
+      state.finale = 0;
+      Camera.set(CONFIG.HOME.lat, CONFIG.HOME.lon, Camera.homeZoom());
+    }
     resetFrom = {
       title: state.title, act2: state.act2, board: state.board,
-      act3: state.act3, act4: state.act4
+      act3: state.act3, act4: state.act4, finale: state.finale,
+      map: state.map, hero: state.hero,
+      view: { lat: Camera.lat, lon: Camera.lon, zoom: Camera.zoom }
     };
     state.phase = 'RESET';
     state.t = 0;
@@ -147,10 +162,12 @@ const Sequence = (function () {
     state.board = 0;
     state.act3 = 0;
     state.act4 = 0;
+    state.finale = 0;
     act2Exit = null;
     resetFrom = null;
     Act3.reset();
     Act4.reset();
+    Finale.reset();
     Narration.clear();
     Scrapbook.reset();
     Flights.clearHero();
@@ -171,8 +188,7 @@ const Sequence = (function () {
   /* Space during the held frame cuts straight to the reset. */
   function skip() {
     if (state.phase === 'HOLD') {
-      state.phase = 'RESET';
-      state.t = 0;
+      beginReset();
       return true;
     }
     return false;
@@ -334,6 +350,25 @@ const Sequence = (function () {
       state.title = 0;
 
       if (t >= CONFIG.ACT4_SECONDS) {
+        state.phase = 'FINALE';
+        state.t = 0;
+        Finale.build();
+      }
+      return;
+    }
+
+    if (state.phase === 'FINALE') {
+      const t = state.t;
+      /* The board gives way slowly; the photograph is already coming up
+         underneath it. */
+      state.finale = 1;
+      state.act4 = 1 - smooth(ramp(t, 0.0, CONFIG.FINALE.fadeIn * 0.75));
+      state.act3 = 0;
+      state.act2 = 0;
+      state.board = 0;
+      state.title = 0;
+
+      if (t >= Finale.duration()) {
         beginReset();
       }
       return;
@@ -342,18 +377,27 @@ const Sequence = (function () {
     if (state.phase === 'RESET') {
       const T = CONFIG.RESET_SECONDS;
       const t = state.t / T;
+      const from = resetFrom || { title: 1, act2: 0, board: 0, act3: 0,
+                                  act4: 0, finale: 0, map: 1, hero: 1,
+                                  view: worldView() };
 
-      state.title = 1 - smooth(ramp(t, 0.00, 0.28));
+      /* Everything that was lit fades from where it was, not from full. */
+      state.title = from.title * (1 - smooth(ramp(t, 0.00, 0.28)));
+      state.act2 = from.act2 * (1 - smooth(ramp(t, 0.00, 0.28)));
+      state.board = from.board * (1 - smooth(ramp(t, 0.00, 0.28)));
+      state.act3 = from.act3 * (1 - smooth(ramp(t, 0.00, 0.28)));
+      state.act4 = from.act4 * (1 - smooth(ramp(t, 0.00, 0.28)));
+      state.finale = from.finale * (1 - smooth(ramp(t, 0.00, 0.28)));
       state.dim = 1 - state.title * (1 - CONFIG.TITLE_DIM);
       state.narration = 0;
-      state.hero = 1 - smooth(ramp(t, 0.08, 0.45));
-      state.map = 1 - smooth(ramp(t, 0.55, 1.00));
+      state.hero = from.hero * (1 - smooth(ramp(t, 0.08, 0.45)));
+      state.map = from.map * (1 - smooth(ramp(t, 0.55, 1.00)));
       state.ambient = smooth(ramp(t, 0.62, 1.00));
       /* Sweep comes back with the black, as the cold open reassembles. */
       state.radar = smooth(ramp(t, 0.60, 1.00));
 
       Flights.updateAmbient(dt, true);
-      lerpCamera(worldView(), homeView(), easeInOutCubic(clamp01(t / 0.88)));
+      lerpCamera(from.view, homeView(), easeInOutCubic(clamp01(t / 0.88)));
 
       if (state.t >= T) toIdle();
       return;

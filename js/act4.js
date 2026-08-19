@@ -178,94 +178,311 @@ const Act4 = (function () {
 
   /* ------------------------------------------------------------- painting */
 
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  /* Which way is "out of the board" for a tile, in radians. Names, prices and
+     corner art all hang off this. Every side reads outward, top row included --
+     that is what makes a Monopoly board look like one from across the room. */
+  function outward(side) {
+    return side === 0 ? Math.PI
+         : side === 1 ? -Math.PI / 2
+         : side === 3 ? Math.PI / 2 : 0;
+  }
+
+  /* A corner square is read along its own diagonal, pointing out of the
+     board -- so the four of them fan out from the middle. */
+  function cornerRot(side) {
+    return -Math.PI / 4 + side * Math.PI / 2;
+  }
+
+  /* Corner artwork, tipped onto the diagonal the way a real board does it.
+     The word underneath stays upright: at this size a diagonal "CARBONITE"
+     ran out of its own square. */
+  function cornerArt(ctx, kind, size, color) {
+    ctx.save();
+    ctx.rotate(-Math.PI / 4);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = Math.max(1.4, size * 0.05);
+    ctx.lineJoin = 'round';
+    const u = size * 0.5;
+
+    if (kind === 'go') {
+      /* A fat arrow, the way GO points you round the board. */
+      ctx.beginPath();
+      ctx.moveTo(-u * 0.9, -u * 0.28);
+      ctx.lineTo(u * 0.15, -u * 0.28);
+      ctx.lineTo(u * 0.15, -u * 0.62);
+      ctx.lineTo(u * 0.95, 0);
+      ctx.lineTo(u * 0.15, u * 0.62);
+      ctx.lineTo(u * 0.15, u * 0.28);
+      ctx.lineTo(-u * 0.9, u * 0.28);
+      ctx.closePath();
+      ctx.fill();
+    } else if (kind === 'jail' || kind === 'gotojail') {
+      /* A barred cell. */
+      ctx.strokeRect(-u * 0.62, -u * 0.62, u * 1.24, u * 1.24);
+      for (let i = -2; i <= 2; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * u * 0.26, -u * 0.62);
+        ctx.lineTo(i * u * 0.26, u * 0.62);
+        ctx.stroke();
+      }
+      if (kind === 'gotojail') {
+        ctx.beginPath();
+        ctx.moveTo(-u * 1.15, -u * 1.15);
+        ctx.lineTo(-u * 0.72, -u * 0.72);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-u * 0.72, -u * 0.72);
+        ctx.lineTo(-u * 0.72, -u * 0.98);
+        ctx.lineTo(-u * 0.46, -u * 0.72);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else if (kind === 'parking') {
+      /* A rimmed disc -- somewhere to sit. */
+      ctx.beginPath();
+      ctx.arc(0, 0, u * 0.60, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(0, 0, u * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* Small marks on the transport and utility squares. */
+  function tileArt(ctx, kind, size, color) {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = Math.max(1.2, size * 0.07);
+    ctx.lineJoin = 'round';
+    const u = size * 0.5;
+    if (kind === 'ship') {
+      ctx.beginPath();
+      ctx.moveTo(0, -u * 0.85);
+      ctx.lineTo(u * 0.24, -u * 0.05);
+      ctx.lineTo(u * 0.85, u * 0.6);
+      ctx.lineTo(u * 0.3, u * 0.42);
+      ctx.lineTo(0, u * 0.8);
+      ctx.lineTo(-u * 0.3, u * 0.42);
+      ctx.lineTo(-u * 0.85, u * 0.6);
+      ctx.lineTo(-u * 0.24, -u * 0.05);
+      ctx.closePath();
+      ctx.fill();
+    } else if (kind === 'util') {
+      ctx.beginPath();
+      ctx.arc(0, -u * 0.15, u * 0.45, Math.PI * 0.15, Math.PI * 0.85, true);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-u * 0.26, u * 0.36);
+      ctx.lineTo(u * 0.26, u * 0.36);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-u * 0.18, u * 0.62);
+      ctx.lineTo(u * 0.18, u * 0.62);
+      ctx.stroke();
+    } else if (kind === 'chance') {
+      ctx.font = '700 ' + Math.round(size * 0.9) + 'px Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('?', 0, 0);
+    }
+    ctx.restore();
+  }
+
   function drawBoard(ctx, t, opacity) {
     const A = CONFIG.ACT4, b = board();
     const assemble = A.assembleSeconds;
+    const surfaceIn = smooth(Math.min(1, t / (assemble * 0.28)));
 
     ctx.save();
-    ctx.globalAlpha = opacity;
-    ctx.fillStyle = A.colors.board;
-    ctx.fillRect(b.left, b.top, b.S, b.S);
+
+    /* The board itself: a faint sheen from the middle out, and a raised frame,
+       so it reads as an object rather than a rectangle of tiles. */
+    ctx.globalAlpha = opacity * surfaceIn;
+    const g = ctx.createRadialGradient(
+      Camera.width / 2, Camera.height / 2, b.S * 0.1,
+      Camera.width / 2, Camera.height / 2, b.S * 0.75);
+    g.addColorStop(0, A.colors.boardCentre);
+    g.addColorStop(1, A.colors.board);
+    ctx.fillStyle = g;
+    roundRect(ctx, b.left, b.top, b.S, b.S, b.S * 0.012);
+    ctx.fill();
+
+    ctx.strokeStyle = A.colors.frame;
+    ctx.lineWidth = Math.max(2, b.S * 0.006);
+    roundRect(ctx, b.left, b.top, b.S, b.S, b.S * 0.012);
+    ctx.stroke();
+
+    /* Inner rule where the ring of tiles meets the middle. */
     ctx.strokeStyle = A.colors.edge;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(b.left, b.top, b.S, b.S);
+    ctx.lineWidth = 1;
+    ctx.strokeRect(b.left + b.corner, b.top + b.corner,
+                   b.S - b.corner * 2, b.S - b.corner * 2);
 
     for (let i = 0; i < TILES; i++) {
-      /* Tiles drop into place one after another as the board is laid out. */
-      const due = (i / TILES) * (assemble * 0.72);
-      const in01 = smooth(Math.min(1, Math.max(0, (t - due) / 0.42)));
-      if (in01 <= 0.001) continue;
+      /* Tiles are laid one after another round the ring, each sliding the last
+         short distance into place. */
+      const due = assemble * 0.20 + (i / TILES) * (assemble * 0.62);
+      const raw = Math.min(1, Math.max(0, (t - due) / 0.5));
+      if (raw <= 0.001) continue;
+      const in01 = easeOutCubic(raw);
 
       const r = tileRect(i, b);
       const spec = tiles[i] || { name: '' };
       const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+      const rot = spec.corner ? 0 : outward(r.side);
 
       ctx.save();
-      ctx.globalAlpha = opacity * in01;
-      ctx.translate(cx, cy);
-      ctx.scale(0.6 + 0.4 * in01, 0.6 + 0.4 * in01);
-      ctx.translate(-cx, -cy);
+      ctx.globalAlpha = opacity * Math.min(1, raw * 2);
+      /* Slide in from just outside its final position. */
+      const slide = (1 - in01) * Math.min(r.w, r.h) * 0.55;
+      const sx = r.side === 1 ? slide : r.side === 3 ? -slide : 0;
+      const sy = r.side === 0 ? -slide : r.side === 2 ? slide : 0;
+      ctx.translate(sx, sy);
 
       ctx.fillStyle = A.colors.tile;
       ctx.fillRect(r.x, r.y, r.w, r.h);
       ctx.strokeStyle = A.colors.edge;
       ctx.lineWidth = 1;
-      ctx.strokeRect(r.x, r.y, r.w, r.h);
+      ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
 
-      /* Colour band on the inner edge, glowing. */
-      if (spec.color) {
-        const d = Math.min(r.w, r.h) * 0.30;
+      /* The deed stripe, on the edge facing the middle, with a hard rule under
+         it -- that rule is a lot of why a Monopoly tile looks like one. */
+      if (spec.color && !spec.corner) {
+        const d = Math.min(r.w, r.h) * 0.34;
         ctx.save();
         ctx.shadowColor = spec.color;
-        ctx.shadowBlur = 14;
+        ctx.shadowBlur = 16;
         ctx.fillStyle = spec.color;
-        if (r.side === 0) ctx.fillRect(r.x, r.y + r.h - d, r.w, d);
-        else if (r.side === 1) ctx.fillRect(r.x, r.y, d, r.h);
-        else if (r.side === 2) ctx.fillRect(r.x, r.y, r.w, d);
-        else ctx.fillRect(r.x + r.w - d, r.y, d, r.h);
+        let bx, by, bw, bh;
+        if (r.side === 0) { bx = r.x; by = r.y + r.h - d; bw = r.w; bh = d; }
+        else if (r.side === 1) { bx = r.x; by = r.y; bw = d; bh = r.h; }
+        else if (r.side === 2) { bx = r.x; by = r.y; bw = r.w; bh = d; }
+        else { bx = r.x + r.w - d; by = r.y; bw = d; bh = r.h; }
+        ctx.fillRect(bx, by, bw, bh);
         ctx.restore();
+        ctx.strokeStyle = A.colors.stripeEdge;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        if (r.side === 0) { ctx.moveTo(bx, by); ctx.lineTo(bx + bw, by); }
+        else if (r.side === 1) { ctx.moveTo(bx + bw, by); ctx.lineTo(bx + bw, by + bh); }
+        else if (r.side === 2) { ctx.moveTo(bx, by + bh); ctx.lineTo(bx + bw, by + bh); }
+        else { ctx.moveTo(bx, by); ctx.lineTo(bx, by + bh); }
+        ctx.stroke();
       }
 
-      /* Names.
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rot);
+      const long = r.side === 0 || r.side === 2 ? r.h : r.w;   // outward depth
+      const across = r.side === 0 || r.side === 2 ? r.w : r.h;
 
-         A real board turns each side's text to face its own player, which
-         leaves half of it upside down. That's fine on a table with four people
-         round it and wrong on a ceiling, where there is one person and one
-         orientation. So the left and right sides turn -- enough to still read
-         as a board -- and the top, bottom and corners stay upright. */
-      if (spec.name) {
-        const rot = spec.corner ? 0
-          : r.side === 1 ? -Math.PI / 2
-          : r.side === 3 ? Math.PI / 2 : 0;
-        const push = Math.min(r.w, r.h) * 0.17;
-        const ox = r.side === 1 ? push : r.side === 3 ? -push : 0;
-        const oy = r.side === 0 ? -push : r.side === 2 ? push : 0;
+      if (spec.corner) {
         ctx.save();
-        ctx.translate(cx + ox, cy + oy);
-        ctx.rotate(rot);
-        ctx.fillStyle = spec.corner ? A.colors.cornerText : A.colors.tileText;
+        ctx.translate(0, -b.corner * 0.10);
+        cornerArt(ctx, spec.art, b.corner * 0.46, A.colors.cornerArt);
+        ctx.restore();
+        ctx.fillStyle = A.colors.cornerText;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const size = spec.corner ? 15 : 13;
-        ctx.font = '600 ' + size + 'px ui-monospace, SFMono-Regular, Menlo, monospace';
-        const words = spec.name.split(' ');
-        const lines = [];
-        let line = '';
-        words.forEach(function (w) {
-          const test = line ? line + ' ' + w : w;
-          if (ctx.measureText(test).width > (spec.corner ? b.corner : b.tile) - 10 && line) {
-            lines.push(line); line = w;
-          } else line = test;
-        });
-        if (line) lines.push(line);
+        ctx.font = '700 13px ui-monospace, SFMono-Regular, Menlo, monospace';
+        ctx.letterSpacing = '2px';
+        ctx.fillText(spec.name, 0, b.corner * 0.34);
+      } else {
+        /* Every tile now faces outward, so the middle of the board is local
+           -y and the outer rim is local +y, whichever side we are on. */
+        const stripe = Math.min(r.w, r.h) * 0.34;
+        const stripeEdge = -(long / 2 - stripe);
+        const outerEdge = long / 2;
+        const along = function (f) { return stripeEdge + (outerEdge - stripeEdge) * f; };
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        /* Transport and utility squares carry a mark where a property carries
+           its name, so the name shifts up against the stripe. */
+        if (spec.art) {
+          ctx.save();
+          ctx.translate(0, along(0.52));
+          tileArt(ctx, spec.art, across * 0.30, A.colors.tileText);
+          ctx.restore();
+        }
+
+        ctx.fillStyle = A.colors.tileText;
+        ctx.font = '600 12px ui-monospace, SFMono-Regular, Menlo, monospace';
+        const lines = wrap(ctx, spec.name, across - 8);
+        const nameY = along(spec.art ? 0.20 : 0.42);
         lines.forEach(function (ln, k) {
-          ctx.fillText(ln, 0, (k - (lines.length - 1) / 2) * (size + 2));
+          ctx.fillText(ln, 0, nameY + (k - (lines.length - 1) / 2) * 14);
         });
-        ctx.restore();
+
+        if (spec.price) {
+          ctx.fillStyle = A.colors.priceText;
+          ctx.font = '500 11px ui-monospace, SFMono-Regular, Menlo, monospace';
+          ctx.letterSpacing = '1px';
+          ctx.fillText('$' + spec.price, 0, along(0.90));
+        }
       }
       ctx.restore();
+      ctx.restore();
+    }
+
+    /* The two card decks, on the diagonal in the middle, as on a real board. */
+    const deckIn = smooth(Math.min(1, Math.max(0, (t - assemble * 0.75) / 0.7)));
+    if (deckIn > 0.004) {
+      const inner = b.S - b.corner * 2;
+      const off = inner * 0.375;
+      [[-off, -off, 'CHANCE', -Math.PI / 4], [off, off, 'CHEST', -Math.PI / 4]]
+        .forEach(function (d) {
+          ctx.save();
+          ctx.globalAlpha = opacity * deckIn * 0.9;
+          ctx.translate(Camera.width / 2 + d[0], Camera.height / 2 + d[1]);
+          ctx.rotate(d[3]);
+          const w = inner * 0.17, h = w * 0.66;
+          /* A couple of cards under the top one, for thickness. */
+          for (let k = 2; k >= 0; k--) {
+            ctx.fillStyle = A.colors.deck;
+            ctx.strokeStyle = A.colors.deckEdge;
+            ctx.lineWidth = 1;
+            roundRect(ctx, -w / 2 + k * 2.5, -h / 2 + k * 2.5, w, h, 4);
+            ctx.fill();
+            ctx.stroke();
+          }
+          ctx.fillStyle = A.colors.tileText;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = '700 11px ui-monospace, SFMono-Regular, Menlo, monospace';
+          ctx.letterSpacing = '2px';
+          ctx.fillText(d[2], 0, 0);
+          ctx.restore();
+        });
     }
     ctx.restore();
+  }
+
+  function wrap(ctx, text, width) {
+    const words = String(text).split(' ');
+    const out = [];
+    let line = '';
+    words.forEach(function (w) {
+      const test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > width && line) { out.push(line); line = w; }
+      else line = test;
+    });
+    if (line) out.push(line);
+    return out;
   }
 
   /* The tile the current turn landed on, pulsing. */
@@ -279,37 +496,54 @@ const Act4 = (function () {
 
     const r = tileRect(turn.to, b);
     const spec = tiles[turn.to] || {};
+    const color = spec.color || '#ffffff';
     ctx.save();
-    const pulse = 0.55 + 0.45 * Math.sin(age * 3.2);
-    ctx.globalAlpha = opacity * (0.35 + 0.4 * pulse);
-    ctx.strokeStyle = spec.color || '#ffffff';
-    ctx.shadowColor = spec.color || '#ffffff';
-    ctx.shadowBlur = 22;
+
+    /* A flash on arrival, then a slow breath. */
+    const flash = Math.max(0, 1 - age / 0.45);
+    if (flash > 0) {
+      ctx.globalAlpha = opacity * flash * 0.35;
+      ctx.fillStyle = color;
+      ctx.fillRect(r.x, r.y, r.w, r.h);
+    }
+    const pulse = 0.55 + 0.45 * Math.sin(age * 3.0);
+    ctx.globalAlpha = opacity * (0.4 + 0.35 * pulse);
+    ctx.strokeStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 24;
     ctx.lineWidth = 3;
     ctx.strokeRect(r.x + 1.5, r.y + 1.5, r.w - 3, r.h - 3);
     ctx.restore();
   }
 
-  function drawDie(ctx, x, y, size, value, angle, alpha, color) {
+  function drawDie(ctx, x, y, size, value, angle, alpha, lift) {
+    const A = CONFIG.ACT4;
     ctx.save();
+
+    /* Shadow on the board, tightening as the die comes down. */
+    const drop = Math.max(0, Math.min(1, lift / (size * 2)));
+    ctx.globalAlpha = alpha * 0.5 * (1 - drop * 0.55);
+    ctx.fillStyle = A.colors.shadow;
+    ctx.beginPath();
+    ctx.ellipse(x + size * 0.18, y + lift + size * 0.62,
+                size * (0.52 - drop * 0.14), size * (0.20 - drop * 0.05), 0, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.translate(x, y);
     ctx.rotate(angle);
     ctx.globalAlpha = alpha;
-    const r = size * 0.18;
-    ctx.fillStyle = color;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 16;
-    ctx.beginPath();
-    ctx.moveTo(-size / 2 + r, -size / 2);
-    ctx.arcTo(size / 2, -size / 2, size / 2, size / 2, r);
-    ctx.arcTo(size / 2, size / 2, -size / 2, size / 2, r);
-    ctx.arcTo(-size / 2, size / 2, -size / 2, -size / 2, r);
-    ctx.arcTo(-size / 2, -size / 2, size / 2, -size / 2, r);
-    ctx.closePath();
+    const r = size * 0.19;
+    const face = ctx.createLinearGradient(-size / 2, -size / 2, size / 2, size / 2);
+    face.addColorStop(0, '#ffffff');
+    face.addColorStop(1, A.colors.dieEdge);
+    ctx.fillStyle = face;
+    roundRect(ctx, -size / 2, -size / 2, size, size, r);
     ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = CONFIG.ACT4.colors.pip;
+    ctx.fillStyle = A.colors.pip;
     const p = size * 0.24;
     const spots = {
       1: [[0, 0]],
@@ -321,12 +555,14 @@ const Act4 = (function () {
     }[value] || [];
     spots.forEach(function (s) {
       ctx.beginPath();
-      ctx.arc(s[0], s[1], size * 0.085, 0, Math.PI * 2);
+      ctx.arc(s[0], s[1], size * 0.088, 0, Math.PI * 2);
       ctx.fill();
     });
     ctx.restore();
   }
 
+  /* Dice are thrown rather than switched on: they arrive from off the board on
+     an arc, tumble down, bounce once and settle. */
   function drawDice(ctx, t, opacity) {
     const A = CONFIG.ACT4;
     const turn = currentTurn(t);
@@ -334,66 +570,104 @@ const Act4 = (function () {
     const age = t - turn.t0;
     if (age < 0 || age > turn.rollFor + turn.hopFor + 0.6) return;
 
-    const settling = Math.min(1, age / turn.rollFor);
     const fade = age > turn.rollFor + turn.hopFor
       ? Math.max(0, 1 - (age - turn.rollFor - turn.hopFor) / 0.6) : 1;
 
     const cx = Camera.width / 2, cy = Camera.height / 2;
-    const size = Math.min(Camera.width, Camera.height) * 0.055;
-    const spread = size * 1.5;
+    const size = Math.min(Camera.width, Camera.height) * 0.052;
+    const spread = size * 1.55;
+    const flight = turn.rollFor * 0.62;
 
     for (let d = 0; d < 2; d++) {
-      const tumbling = settling < 1;
-      /* Whirling through faces until it settles on the real one. */
-      const value = tumbling ? 1 + (((t * 22 + d * 3) | 0) % 6) : turn.dice[d];
-      const angle = tumbling ? (t * (7 + d * 2)) % (Math.PI * 2)
-                             : Math.sin(d * 2.1) * 0.12;
-      const lift = tumbling ? (1 - settling) * size * 1.4 : 0;
-      drawDie(ctx, cx + (d === 0 ? -spread : spread), cy - size * 2.1 - lift,
-              size, value, angle, opacity * fade, A.colors.die);
+      const restX = cx + (d === 0 ? -spread : spread);
+      const restY = cy - size * 2.4;
+      const k = Math.min(1, age / flight);
+
+      let x, y, lift, angle, value;
+      if (k < 1) {
+        /* Flying in from beyond the corner of the board. */
+        const e = easeOutCubic(k);
+        const fromX = cx + b_sign(d) * Camera.width * 0.42;
+        const fromY = cy + Camera.height * 0.44;
+        x = fromX + (restX - fromX) * e;
+        y = fromY + (restY - fromY) * e;
+        lift = Math.sin(k * Math.PI) * size * 2.6;
+        angle = (1 - k) * (9 + d * 3) + k * 0.1;
+        value = 1 + (((t * 26 + d * 3) | 0) % 6);
+      } else {
+        /* Two quick bounces, then still. */
+        const settle = Math.min(1, (age - flight) / (turn.rollFor - flight));
+        const bounce = Math.abs(Math.sin(settle * Math.PI * 2.1)) * (1 - settle);
+        x = restX;
+        y = restY;
+        lift = bounce * size * 0.85;
+        angle = Math.sin(d * 2.1) * 0.12 * settle + (1 - settle) * 0.6;
+        value = settle > 0.55 ? turn.dice[d]
+                              : 1 + (((t * 26 + d * 3) | 0) % 6);
+      }
+      drawDie(ctx, x, y - lift, size, value, angle, opacity * fade, lift);
     }
 
-    if (settling >= 1) {
+    if (age >= turn.rollFor) {
       ctx.save();
-      ctx.globalAlpha = opacity * fade * 0.85;
-      ctx.fillStyle = A.colors.tileText;
-      ctx.font = '600 ' + Math.round(size * 0.52) + 'px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.globalAlpha = opacity * fade * 0.9;
+      ctx.fillStyle = A.colors.cornerText;
+      ctx.font = '700 ' + Math.round(size * 0.5) + 'px ui-monospace, SFMono-Regular, Menlo, monospace';
       ctx.textAlign = 'center';
       ctx.letterSpacing = '3px';
-      ctx.fillText(String(turn.steps), cx, cy - size * 0.75);
+      ctx.fillText(String(turn.steps), cx, cy - size * 1.0);
       ctx.restore();
     }
   }
 
+  function b_sign(d) { return d === 0 ? -1 : 1; }
+
   /* Tokens: two pieces, drawn rather than borrowed. */
-  function drawToken(ctx, x, y, kind, size, alpha, color) {
+  function drawToken(ctx, x, y, kind, size, alpha, color, lift) {
+    const A = CONFIG.ACT4;
+    ctx.save();
+    /* Shadow stays on the board while the piece hops above it. */
+    const h = Math.max(0, lift || 0);
+    ctx.globalAlpha = alpha * 0.55 * (1 - Math.min(0.6, h / (size * 3)));
+    ctx.fillStyle = A.colors.shadow;
+    ctx.beginPath();
+    ctx.ellipse(x + size * 0.12, y + h + size * 0.85,
+                size * 0.72, size * 0.26, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
     ctx.save();
     ctx.translate(x, y);
     ctx.globalAlpha = alpha;
     ctx.shadowColor = color;
-    ctx.shadowBlur = 18;
+    ctx.shadowBlur = 20;
 
     if (kind === 0) {
-      /* A banded sphere. */
-      ctx.fillStyle = color;
+      const g = ctx.createLinearGradient(0, -size, 0, size);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.42, color);
+      g.addColorStop(1, '#5a1114');
+      ctx.fillStyle = g;
       ctx.beginPath();
       ctx.arc(0, 0, size, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = alpha * 0.9;
-      ctx.fillStyle = CONFIG.ACT4.colors.board;
-      ctx.fillRect(-size, -size * 0.16, size * 2, size * 0.32);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(8,10,14,0.92)';
+      ctx.fillRect(-size, -size * 0.15, size * 2, size * 0.30);
       ctx.beginPath();
       ctx.arc(0, 0, size * 0.34, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = alpha;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = size * 0.16;
+      ctx.strokeStyle = '#f4f4f4';
+      ctx.lineWidth = size * 0.13;
       ctx.beginPath();
       ctx.arc(0, 0, size * 0.34, 0, Math.PI * 2);
       ctx.stroke();
     } else {
-      /* A swept fighter, nose up. */
-      ctx.fillStyle = color;
+      const g = ctx.createLinearGradient(0, -size, 0, size);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.5, color);
+      g.addColorStop(1, '#12556d');
+      ctx.fillStyle = g;
       ctx.beginPath();
       ctx.moveTo(0, -size * 1.15);
       ctx.lineTo(size * 0.28, -size * 0.1);
@@ -411,23 +685,27 @@ const Act4 = (function () {
 
   function drawTokens(ctx, t, opacity) {
     const A = CONFIG.ACT4, b = board();
+    /* The pieces are set down once the board itself has finished arriving --
+       before that they were floating over bare felt. */
+    const placed = smooth(Math.min(1, Math.max(0, (t - A.assembleSeconds * 0.86) / 0.6)));
+    if (placed <= 0.001) return;
+    opacity *= placed;
     const size = Math.min(b.tile, b.corner) * 0.26;
     for (let who = 0; who < 2; who++) {
       const st = tokenTile(who, t);
       let p = tokenSpot(st.tile, b);
+      let lift = 0;
       if (st.hopping) {
         const q = tokenSpot(st.next, b);
         const e = st.frac;
         p = { x: p.x + (q.x - p.x) * e, y: p.y + (q.y - p.y) * e };
-        /* A little arc on each hop. */
-        p.y -= Math.sin(e * Math.PI) * size * 1.5;
+        lift = Math.sin(e * Math.PI) * size * 1.7;
       }
-      /* Side by side when they share a square. */
       const other = tokenTile(1 - who, t);
       const nudge = other.tile === st.tile && !st.hopping && !other.hopping
         ? (who === 0 ? -size * 0.85 : size * 0.85) : 0;
-      drawToken(ctx, p.x + nudge, p.y, who, size, opacity,
-                who === 0 ? A.colors.tokenA : A.colors.tokenB);
+      drawToken(ctx, p.x + nudge, p.y - lift, who, size, opacity,
+                who === 0 ? A.colors.tokenA : A.colors.tokenB, lift);
     }
   }
 
@@ -446,45 +724,60 @@ const Act4 = (function () {
     if (fade <= 0.004) return;
 
     const inner = b.S - b.corner * 2;
-    const pw = inner * 0.74, ph = pw * 0.66;
+    const pw = inner * 0.70, ph = pw * 0.66;
     const cx = Camera.width / 2, cy = Camera.height / 2;
+    const py = cy - inner * 0.05;
 
     ctx.save();
     ctx.globalAlpha = opacity * fade;
+    /* Placed like a card being laid down. */
+    const place = easeOutCubic(Math.min(1, age / (A.revealFade * 1.3)));
+    ctx.translate(cx, py);
+    ctx.rotate((1 - place) * -0.06);
+    ctx.scale(0.94 + 0.06 * place, 0.94 + 0.06 * place);
+
+    ctx.shadowColor = 'rgba(0,0,0,0.7)';
+    ctx.shadowBlur = 34;
+    ctx.shadowOffsetY = 10;
+    ctx.fillStyle = '#0a0d12';
+    ctx.fillRect(-pw / 2 - 7, -ph / 2 - 7, pw + 14, ph + 14);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
 
     const img = images.get(turn.reveal.photo);
-    const py = cy - inner * 0.06;
     if (img && img !== 'loading' && img !== 'missing') {
       const ar = img.width / img.height, fr = pw / ph;
       let sw = img.width, sh = img.height, sx = 0, sy = 0;
       if (ar > fr) { sw = img.height * fr; sx = (img.width - sw) / 2; }
       else { sh = img.width / fr; sy = (img.height - sh) / 2; }
-      ctx.drawImage(img, sx, sy, sw, sh, cx - pw / 2, py - ph / 2, pw, ph);
+      ctx.drawImage(img, sx, sy, sw, sh, -pw / 2, -ph / 2, pw, ph);
     } else {
       ctx.fillStyle = A.colors.frameEmpty;
-      ctx.fillRect(cx - pw / 2, py - ph / 2, pw, ph);
-      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillRect(-pw / 2, -ph / 2, pw, ph);
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
       ctx.setLineDash([7, 7]);
       ctx.lineWidth = 1;
-      ctx.strokeRect(cx - pw / 2 + 8, py - ph / 2 + 8, pw - 16, ph - 16);
+      ctx.strokeRect(-pw / 2 + 8, -ph / 2 + 8, pw - 16, ph - 16);
       ctx.setLineDash([]);
     }
     ctx.strokeStyle = tiles[turn.to] && tiles[turn.to].color || '#ffffff';
     ctx.lineWidth = 3;
-    ctx.strokeRect(cx - pw / 2, py - ph / 2, pw, ph);
+    ctx.strokeRect(-pw / 2, -ph / 2, pw, ph);
+    ctx.restore();
 
-    /* The square it landed on, then the line. */
     const scale = Math.min(Camera.width, Camera.height) / 1080;
+    ctx.save();
+    ctx.globalAlpha = opacity * fade;
     ctx.textAlign = 'center';
     ctx.fillStyle = tiles[turn.to] && tiles[turn.to].color || '#ffffff';
     ctx.font = '700 ' + (19 * scale) + 'px ui-monospace, SFMono-Regular, Menlo, monospace';
     ctx.letterSpacing = (4 * scale) + 'px';
-    ctx.fillText((tiles[turn.to] || {}).name || '', cx, py + ph / 2 + 34 * scale);
-
+    ctx.fillText((tiles[turn.to] || {}).name || '', cx, py + ph / 2 + 36 * scale);
     ctx.fillStyle = A.colors.centreText;
     ctx.font = 'italic ' + (23 * scale) + 'px Georgia, "Times New Roman", serif';
     ctx.letterSpacing = '0px';
-    ctx.fillText(turn.reveal.line || '', cx, py + ph / 2 + 68 * scale);
+    ctx.fillText(turn.reveal.line || '', cx, py + ph / 2 + 70 * scale);
     ctx.restore();
   }
 
