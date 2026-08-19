@@ -10,16 +10,29 @@
 const CONFIG = {
 
   /* --- timing ------------------------------------------------------------
-     SEQUENCE_SECONDS is the whole show: launch -> zoom out -> everyone
-     landed -> title card. Every other beat below is a fraction of it, so
-     changing this one number retimes the entire piece.                     */
-  SEQUENCE_SECONDS: 75,
+     SEQUENCE_SECONDS is Act One: launch -> zoom out -> everyone landed ->
+     title card. Every beat inside it is a fraction of it, so changing this
+     one number retimes the whole act, narration included.
+
+     The five acts run back to back, and these are the numbers that decide
+     where each one lands on the clock:
+
+        Act One      51      0:00
+        title hold    3      0:51
+        Act Two      31      0:54
+        Act Three    18      1:25
+        Act Four     27      1:43
+        finale       15      2:10  -> ends 2:25
+        reset       3.5      2:25  -> radar back at 2:28.5
+
+     Move any of them and everything after it shifts by the same amount.   */
+  SEQUENCE_SECONDS: 51,
 
   /* How long the title card holds before Act Two begins. */
   HOLD_SECONDS: 3,
 
   /* Act Two: the plane revisiting four places, building a scrapbook. */
-  ACT2_SECONDS: 34,
+  ACT2_SECONDS: 31,
 
   /* How long the drift back to Seattle takes. */
   RESET_SECONDS: 3.5,
@@ -143,32 +156,32 @@ const CONFIG = {
    -------------------------------------------------------------------------- */
 const NARRATION = [
   {
-    at: 0.05, hold: 5.5,
+    at: 0.05, hold: 4.3,
     line1: 'Two airports, thirty-two miles apart',
     line2: 'everything we have done starts from here'
   },
   {
-    at: 0.14, hold: 5.5, after: 'LAS',
+    at: 0.19, hold: 4.3, after: 'LAS',
     line1: 'Some we barely planned',
     line2: 'Vegas out of Paine Field, twice, on a whim'
   },
   {
-    at: 0.24, hold: 5.5, after: 'YYZ',
+    at: 0.32, hold: 4.3, after: 'YYZ',
     line1: 'Before it was Seattle, it was Toronto',
     line2: 'five years of leaving, and coming back'
   },
   {
-    at: 0.36, hold: 5.5, after: 'YEG',
+    at: 0.46, hold: 4.3, after: 'YEG',
     line1: 'And all the small ones in between',
     line2: 'the weekends, the long layovers, the flights home'
   },
   {
-    at: 0.50, hold: 5.5, after: 'HKG',
+    at: 0.60, hold: 4.3, after: 'HKG',
     line1: 'Then further, and further again',
     line2: 'Hong Kong, Tokyo, Taipei \u2014 the long way round'
   },
   {
-    at: 0.62, hold: 5.5, after: 'KEF',
+    at: 0.73, hold: 4.3, after: 'KEF',
     line1: 'One hundred and twenty-nine thousand miles',
     line2: 'five times around the world, together'
   }
@@ -435,7 +448,7 @@ CONFIG.ACT2_CAMERA = {
    inwards towards the surface.
    ========================================================================== */
 
-CONFIG.ACT3_SECONDS = 20;
+CONFIG.ACT3_SECONDS = 18;
 CONFIG.ACT3_FADE_IN = 2.4;   // how long the map takes to dissolve into water
 
 CONFIG.ACT3 = {
@@ -497,13 +510,13 @@ CONFIG.ACT3 = {
      narration -- rewrite them. */
   textFade: 1.1,
   lines: [
-    { at: 2.0,  hold: 3.4, y: 0.30,
+    { at: 1.8,  hold: 3.4, y: 0.30,
       line1: 'AND THEN THERE IS THE WATER',
       line2: 'the first thing we look for, everywhere we go' },
-    { at: 8.5,  hold: 3.4, y: 0.72,
+    { at: 7.6,  hold: 3.4, y: 0.72,
       line1: 'NO DEPARTURE BOARDS DOWN HERE',
       line2: 'nowhere to be, nothing to catch' },
-    { at: 15.0, hold: 3.2, y: 0.30,
+    { at: 13.2, hold: 3.2, y: 0.30,
       line1: 'STAY IN A WHILE',
       line2: 'we have got time' }
   ]
@@ -526,7 +539,7 @@ CONFIG.ACT3 = {
    and names. Colour groups alternate between the two worlds all the way round.
    ========================================================================== */
 
-CONFIG.ACT4_SECONDS = 30;
+CONFIG.ACT4_SECONDS = 27;
 
 CONFIG.ACT4 = {
   dir: 'photos/',
@@ -535,7 +548,7 @@ CONFIG.ACT4 = {
   assembleSeconds: 3.9,     // board laying itself out
   surfaceSeconds: 1.3,      // the flash of breaking the surface
   finaleSeconds: 2.6,       // both tokens together at the end
-  rollSeconds: 1.45,        // the throw: flying in, tumbling, settling
+  rollSeconds: 1.25,        // the throw: flying in, tumbling, settling
   hopSeconds: 0.115,        // per square
   revealFade: 0.55,
 
@@ -621,9 +634,9 @@ CONFIG.FINALE = {
   photo: 'finale.jpg',
   line: 'happy anniversary, my favourite person to go anywhere with',
 
-  fadeIn: 3.5,          // slow arrival out of the board
+  fadeIn: 2.5,          // slow arrival out of the board
   hold: 10,             // held, still
-  fadeOut: 3.5,         // down into the black the radar begins from
+  fadeOut: 2.5,         // down into the black the radar begins from
 
   size: 0.52,           // photograph height as a fraction of the screen
   aspect: 1.4,          // 7:5 landscape

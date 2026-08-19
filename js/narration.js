@@ -10,7 +10,7 @@
 
 const Narration = (function () {
 
-  const FADE = 1.4;          // seconds to fade a line in or out
+  const FADE = 1.0;          // seconds to fade a line in or out
   let beats = [];
 
   function build() {
@@ -119,5 +119,5 @@ const Narration = (function () {
     }
   }
 
-  return { build: build, update: update, clear: clear };
+  return { build: build, update: update, clear: clear, schedule: schedule };
 })();

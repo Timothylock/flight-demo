@@ -67,10 +67,31 @@ to collide, so nothing breaks -- but it's better to give it room by raising
 The narration in the repo is a **draft**. Its facts are true to the CSV -- the
 mileage, the dates, the counts -- but the sentiment is guesswork. Rewrite it.
 
-**The timing.** `SEQUENCE_SECONDS` is the whole show, launch to title card.
-Every other beat is a fraction of it, so changing that one number retimes the
-piece -- narration included. `HOLD_SECONDS` is how long the finished frame sits
-before resetting.
+**The timing.** `SEQUENCE_SECONDS` is Act One, launch to title card. Every
+beat inside it is a fraction of it, so changing that one number retimes the act
+-- narration included. `HOLD_SECONDS` is how long the title sits before the
+scrapbook starts.
+
+The five acts run back to back, and the whole piece is two minutes twenty-five:
+
+| | seconds | starts |
+|---|---|---|
+| Act One, the radar and the spreading | `SEQUENCE_SECONDS` 51 | 0:00 |
+| the title card, held | `HOLD_SECONDS` 3 | 0:51 |
+| Act Two, the scrapbook | `ACT2_SECONDS` 31 | 0:54 |
+| Act Three, the water | `ACT3_SECONDS` 18 | 1:25 |
+| Act Four, the board | `ACT4_SECONDS` 27 | 1:43 |
+| the finale | `FINALE` 2.5 + 10 + 2.5 | 2:10 |
+| the drift back to the radar | `RESET_SECONDS` 3.5 | 2:25 |
+
+Move any one of them and everything after it shifts by the same amount. Two
+floors are worth knowing before you cut: Act Two needs about 29 seconds to keep
+a full five-second hold over each of its four places (below that
+`CONFIG.ACT2_HOLD` starts getting squeezed automatically), and Act One needs
+about 50 to carry six narration beats without the last one running into the
+title card -- `js/narration.js` squeezes the holds rather than let them
+collide, so a too-short act shows up as narration that flicks past rather than
+as anything breaking.
 
 **The last frame.** `CONFIG.FINALE` is the closing beat: one filename, one
 line, and `fadeIn` / `hold` / `fadeOut` in seconds. Drop `photos/finale.jpg` in
