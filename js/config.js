@@ -417,3 +417,90 @@ CONFIG.ACT2_CAMERA = {
   offsetX: 0.12,          // nudge the map right, clear of the board
   offsetY: 0.06
 };
+
+/* ==========================================================================
+   ACT THREE -- under the water, looking up.
+
+   Everything here is drawn in perspective along the view axis, because that's
+   what a ceiling gives you: the viewer is already looking straight up, so
+   "up" recedes towards the middle of the frame rather than towards an edge.
+
+   The transition is a consequence of that, not a separate effect. The act
+   opens with the camera sinking faster than the bubbles rise, so they stream
+   outwards past you; as the descent decays they turn round and begin drifting
+   inwards towards the surface.
+   ========================================================================== */
+
+CONFIG.ACT3_SECONDS = 20;
+CONFIG.ACT3_FADE_IN = 2.4;   // how long the map takes to dissolve into water
+
+CONFIG.ACT3 = {
+  dir: 'photos/',
+
+  /* Perspective. z is distance along the view axis: zNear is right at your
+     mask, zFar is up near the surface. */
+  focal: 0.62,
+  zNear: 0.30,
+  zFar: 4.2,
+
+  /* The descent. sinkStart well above a bubble's rise rate is what makes them
+     rush outwards at the top of the act. */
+  sinkStart: 2.6,
+  sinkDecay: 3.4,         // seconds for the sink to fall to 1/e
+
+  bubbleCount: 150,
+  moteCount: 190,
+
+  /* Snell's window: from underwater the whole sky is squeezed into a bright
+     disc overhead, everything outside it dark. */
+  snellRadius: 0.66,
+  snellAlpha: 0.92,
+  shafts: 9,
+  shaftAlpha: 0.055,
+
+  colors: {
+    deep:         '#02141c',
+    mid:          '#06323c',
+    nearSurface:  '#0b5560',
+    windowCore:   '#dbfaf6',
+    windowMid:    '#79d6d2',
+    windowHold:   '#3f9fa4',
+    windowEdge:   'rgba(30,120,130,0)',
+    shaft:        'rgba(175,255,250,0.55)',
+    bubbleFill:   '#bff4f4',
+    bubbleRim:    '#e8ffff',
+    bubbleHi:     '#ffffff',
+    mote:         '#a8ecec',
+    frameEmpty:   'rgba(9,58,68,0.88)',
+    text:         '#e8ffff',
+    textSoft:     '#a9dee0'
+  },
+
+  /* Photographs. Six to eight, hanging at staggered depths so two or three
+     are suspended at once, drifting past each other. Missing files draw as
+     empty frames, same as Act Two. */
+  photos: [
+    'water-1.jpg', 'water-2.jpg', 'water-3.jpg', 'water-4.jpg',
+    'water-5.jpg', 'water-6.jpg', 'water-7.jpg'
+  ],
+  photoSize: 0.80,        // world units; scales with distance
+  photoLife: 7.5,         // seconds each stays before drifting off
+  photoFade: 1.4,
+  photosStart: 3.4,       // first photograph, after the descent settles
+  photosEnd: 3.0,         // last one starts this long before the end
+
+  /* Two or three lines, spread through. Same draft caveat as Act One's
+     narration -- rewrite them. */
+  textFade: 1.1,
+  lines: [
+    { at: 2.0,  hold: 3.4, y: 0.30,
+      line1: 'AND THEN THERE IS THE WATER',
+      line2: 'the first thing we look for, everywhere we go' },
+    { at: 8.5,  hold: 3.4, y: 0.72,
+      line1: 'NO DEPARTURE BOARDS DOWN HERE',
+      line2: 'nowhere to be, nothing to catch' },
+    { at: 15.0, hold: 3.2, y: 0.30,
+      line1: 'STAY IN A WHILE',
+      line2: 'we have got time' }
+  ]
+};

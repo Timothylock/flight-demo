@@ -109,6 +109,7 @@ as a stutter the entire way out.
 | `js/radar.js` | rings and the sweep |
 | `js/flights.js` | aircraft, routes, the spreading schedule |
 | `js/act2.js` | the scrapbook act: flights, camera ramp, arrivals |
+| `js/act3.js` | the water: perspective, bubbles, Snell's window |
 | `js/ledboard.js` | the dot-matrix flight board |
 | `js/scrapbook.js` | photograph frames pinned to the map |
 | `js/airports.js` | markers and their reveal |
@@ -118,6 +119,16 @@ as a stutter the entire way out.
 The board's text isn't a pixel typeface. It's rendered tiny on an offscreen
 canvas, read back a pixel at a time, and each lit pixel redrawn as a round LED --
 so the dots *are* the glyphs. Sizes in `CONFIG.BOARD` are in dots, not pixels.
+
+Act Three is drawn in perspective along the view axis rather than flat, because
+that is what a ceiling gives you: whoever is watching is already looking
+straight up, so "up" recedes towards the middle of the frame instead of towards
+an edge. Everything has a distance; rising means receding. The opening
+transition falls out of that rather than being a separate effect -- the camera
+sinks faster than the bubbles rise, so they stream outwards past you, and as the
+descent decays they turn round and drift inwards towards the surface. Overhead
+is Snell's window, the bright disc the whole sky compresses into when seen from
+below water.
 
 Two details worth knowing if you change things:
 

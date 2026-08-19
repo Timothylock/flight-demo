@@ -25,7 +25,8 @@ const Sequence = (function () {
     radar: 1,             // the sweep: cold open only
     narration: 0,         // the lines carried through the flying
     act2: 0,              // the scrapbook act
-    board: 0              // the LED flight board
+    board: 0,             // the LED flight board
+    act3: 0               // the water
   };
 
   function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
@@ -132,7 +133,9 @@ const Sequence = (function () {
     state.narration = 0;
     state.act2 = 0;
     state.board = 0;
+    state.act3 = 0;
     act2Exit = null;
+    Act3.reset();
     Narration.clear();
     Scrapbook.reset();
     Flights.clearHero();
@@ -274,6 +277,28 @@ const Sequence = (function () {
       }
 
       if (t >= T) {
+        state.phase = 'ACT3';
+        state.t = 0;
+        Act3.build();
+      }
+      return;
+    }
+
+    if (state.phase === 'ACT3') {
+      const t = state.t;
+      /* The water rises over the map rather than replacing it: bubbles are
+         already streaming past while the coastlines are still fading. */
+      state.act3 = smooth(ramp(t, 0.0, CONFIG.ACT3_FADE_IN));
+      state.act2 = 1 - smooth(ramp(t, 0.2, CONFIG.ACT3_FADE_IN * 0.9));
+      state.board = 1 - smooth(ramp(t, 0.0, 0.8));
+      state.map = 1 - smooth(ramp(t, 0.3, CONFIG.ACT3_FADE_IN));
+      state.hero = 0;
+      state.ambient = 0;
+      state.title = 0;
+
+      Act3.update(t, dt);
+
+      if (t >= CONFIG.ACT3_SECONDS) {
         state.phase = 'RESET';
         state.t = 0;
       }

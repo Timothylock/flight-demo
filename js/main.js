@@ -53,6 +53,10 @@
     Flights.drawHero(ctx, heroT, s.hero * s.dim);
 
     if (s.act2 > 0.004) drawAct2(ctx, s);
+    if (s.act3 > 0.004) {
+      const t3 = Sequence.state.phase === 'ACT3' ? Sequence.state.t : CONFIG.ACT3_SECONDS;
+      Act3.draw(ctx, t3, s.act3);
+    }
 
     Narration.update(heroT, s.narration);
     titleEl.style.opacity = s.title;
