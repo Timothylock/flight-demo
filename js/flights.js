@@ -112,43 +112,85 @@ const Flights = (function () {
 
   /* --------------------------------------------------------------- ambient */
 
-  function randomCallsign() {
-    const a = AMBIENT_AIRLINES[(Math.random() * AMBIENT_AIRLINES.length) | 0];
-    return a + ' ' + (100 + ((Math.random() * 1800) | 0));
+  /* Which part of a route is actually over the scope.
+
+     The idle traffic is real service now, and real service out of Seattle goes
+     to Tokyo and Reykjavik as well as to Portland. Flown end to end, a flight
+     to Narita would be off the edge within a minute and then spend the rest of
+     its life invisible, and the scope would quietly empty out. So each
+     aircraft flies only the window of its route that crosses the screen, and
+     reaching the end of that window is what retires it.
+
+     Returns null for a route that never crosses at all, which the caller
+     treats as a flight to skip. */
+  function scopeWindow(seg) {
+    const N = 72, pad = 1 / N;
+    let a = -1, b = -1;
+    for (let i = 0; i <= N; i++) {
+      const f = i / N;
+      const at = Geo.alongPath(seg.pts, seg.acc, f);
+      if (Camera.onScreen(Camera.project(at.lat, at.lon), 90)) {
+        if (a < 0) a = f;
+        b = f;
+      }
+    }
+    if (a < 0) return null;
+    return { a: Math.max(0, a - pad), b: Math.min(1, b + pad) };
   }
 
   function spawnAmbient(atRandomProgress) {
-    const pair = AMBIENT_ROUTES[(Math.random() * AMBIENT_ROUTES.length) | 0];
-    /* A wide spread of arc offsets. Most of the idle routes end at SEA, and
-       flown as exact great circles they'd all converge into one stack of
-       aircraft on the same final approach with their labels piled on top of
-       each other. Real arrivals come in off different tracks; this does the
-       same, and keeps the scope looking busy rather than queued. */
-    const seg = route(pair[0], pair[1], (Math.random() - 0.5) * 5, 48);
-    return {
-      callsign: randomCallsign(),
-      seg: seg,
-      /* Never start one on top of its destination, for the same reason. */
-      p: atRandomProgress ? Math.random() * 0.8 : 0,
-      speed: CONFIG.AMBIENT_SPEED * (0.7 + Math.random() * 0.7),
-      fade: 1
-    };
+    /* Try a few: a route whose window is empty at this camera is no use. */
+    for (let tries = 0; tries < 12; tries++) {
+      const spec = AMBIENT_FLIGHTS[(Math.random() * AMBIENT_FLIGHTS.length) | 0];
+      /* A wide spread of arc offsets. Most of the idle routes touch SEA, and
+         flown as exact great circles they'd all converge into one stack of
+         aircraft on the same final approach with their labels piled on top of
+         each other. Real arrivals come in off different tracks; this does the
+         same, and keeps the scope looking busy rather than queued. */
+      const seg = route(spec[1], spec[2], (Math.random() - 0.5) * 5, 64);
+      const win = scopeWindow(seg);
+      if (!win) continue;
+      /* One stylised ground speed for everybody, so a flight to Tokyo crosses
+         the scope at the same pace as a flight to Portland instead of tearing
+         across it. Real speeds would barely move at this zoom. */
+      const speed = CONFIG.AMBIENT_GROUND_SPEED / Math.max(60, seg.km);
+      return {
+        callsign: spec[0],
+        seg: seg,
+        from: spec[1],
+        to: spec[2],
+        a: win.a,
+        b: win.b,
+        /* Never start one on top of where it leaves, for the same reason. */
+        p: win.a + (win.b - win.a) * (atRandomProgress ? Math.random() * 0.8 : 0),
+        speed: speed * (0.82 + Math.random() * 0.36),
+        fade: 1
+      };
+    }
+    return null;
   }
 
   function buildAmbient() {
     ambient.length = 0;
-    for (let i = 0; i < CONFIG.AMBIENT_COUNT; i++) ambient.push(spawnAmbient(true));
+    for (let i = 0; i < CONFIG.AMBIENT_COUNT; i++) {
+      const f = spawnAmbient(true);
+      if (f) ambient.push(f);
+    }
   }
 
   function updateAmbient(dt, alive) {
     for (let i = 0; i < ambient.length; i++) {
       const f = ambient[i];
       f.p += f.speed * dt;
-      if (f.p >= 1) {
+      if (f.p >= f.b) {
         /* Only recycle while the idle scene is the one on screen -- once it's
            faded out we let them run off and stay gone. */
-        if (alive) ambient[i] = spawnAmbient(false);
-        else f.p = 1;
+        if (alive) {
+          const next = spawnAmbient(false);
+          if (next) ambient[i] = next; else f.p = f.b;
+        } else {
+          f.p = f.b;
+        }
       }
     }
   }
@@ -448,6 +490,7 @@ const Flights = (function () {
     updateHero: updateHero,
     drawHero: drawHero,
     clearHero: clearHero,
-    heroes: heroes
+    heroes: heroes,
+    ambient: function () { return ambient; }
   };
 })();

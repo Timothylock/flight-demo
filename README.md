@@ -55,6 +55,20 @@ The final camera view fits itself to wherever the routes actually go, so a set
 of trips that never leaves Europe ends on Europe rather than on the whole
 globe. Nothing to retune.
 
+**The idle traffic.** `AMBIENT_FLIGHTS` is the cold open's background, and it
+is the one part of the piece that isn't about us: real services, each callsign
+paired with a route that airline genuinely flies. Paine Field only ever gets
+Alaska, because that is all that flies out of Paine Field, and the only other
+thing leaving Everett is a Boeing test aircraft going out to Moses Lake and
+back -- `BOE` on a callsign. The flight numbers are representative rather than
+current; airlines renumber every schedule, and this has to work offline years
+from now. The airline-and-route pairings are the part that is true.
+
+Each aircraft flies only the stretch of its route that crosses the scope --
+a departure for Newark is over Puget Sound for the first eleven percent of it
+and off the edge after that -- so the scope stays populated instead of filling
+with aircraft that left the frame and haven't finished their flight.
+
 **The words.** `NARRATION` in `js/config.js` is the script -- lines carried
 through the flying rather than saved for the end. Each beat has an `at` (a
 fraction of the sequence) and a `hold`, and optionally `after: 'YYZ'`, which

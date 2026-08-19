@@ -172,9 +172,11 @@ const Sequence = (function () {
     Narration.clear();
     Scrapbook.reset();
     Flights.clearHero();
-    Flights.buildAmbient();
     Airports.reset();
+    /* Home first: the idle traffic works out which part of each route is over
+       the scope, and it can only do that once the scope is where it belongs. */
     lerpCamera(homeView(), homeView(), 0);
+    Flights.buildAmbient();
   }
 
   function start() {

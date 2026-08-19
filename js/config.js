@@ -131,7 +131,11 @@ const CONFIG = {
 
   /* --- ambient traffic (the cold open) ------------------------------------ */
   AMBIENT_COUNT: 5,
-  AMBIENT_SPEED: 0.018,     // fraction of route per second -- a slow drift
+  /* A stylised ground speed, km/s, the same for everybody: at this zoom a real
+     900 km/h would take an hour to cross the scope. Being a speed rather than
+     a fraction of the route is what keeps a flight to Tokyo drifting at the
+     same pace as a flight to Portland. */
+  AMBIENT_GROUND_SPEED: 4.2,
 
   /* --- the departure network ------------------------------------------------
      Nothing leaves an airport until a flight has arrived there, so the map
@@ -223,7 +227,18 @@ const REGIONAL_FIELDS = {
   PSC: { name: 'Pasco',            lat:  46.2647, lon: -119.1190 },
   SLC: { name: 'Salt Lake City',   lat:  40.7899, lon: -111.9791 },
   YKM: { name: 'Yakima',           lat:  46.5682, lon: -120.5440 },
-  YYJ: { name: 'Victoria',         lat:  48.6469, lon: -123.4258 }
+  YYJ: { name: 'Victoria',         lat:  48.6469, lon: -123.4258 },
+
+  /* Reached by the real idle traffic below rather than by any of our flights. */
+  ANC: { name: 'Anchorage',        lat:  61.1743, lon: -149.9962 },
+  BZN: { name: 'Bozeman',          lat:  45.7776, lon: -111.1530 },
+  JNU: { name: 'Juneau',           lat:  58.3549, lon: -134.5763 },
+  MSO: { name: 'Missoula',         lat:  46.9163, lon: -114.0906 },
+  MWH: { name: 'Moses Lake',       lat:  47.2077, lon: -119.3200 },
+  PHX: { name: 'Phoenix',          lat:  33.4343, lon: -112.0116 },
+  PUW: { name: 'Pullman',          lat:  46.7439, lon: -117.1096 },
+  RDM: { name: 'Redmond',          lat:  44.2541, lon: -121.1500 },
+  SUN: { name: 'Sun Valley',       lat:  43.5044, lon: -114.2961 }
 };
 
 const AIRPORTS = Object.assign({}, REGIONAL_FIELDS, ROUTE_DATA.airports);
@@ -232,17 +247,88 @@ const AIRPORTS = Object.assign({}, REGIONAL_FIELDS, ROUTE_DATA.airports);
    departs an airport an earlier journey has reached. */
 const HERO_ROUTES = ROUTE_DATA.journeys;
 
-/* Idle traffic: where the cold-open flights come from and go to. */
-const AMBIENT_ROUTES = [
-  ['PDX', 'SEA'], ['GEG', 'SEA'], ['BOI', 'SEA'], ['YVR', 'SEA'],
-  ['SLC', 'SEA'], ['DEN', 'SEA'], ['EUG', 'SEA'], ['MFR', 'SEA'],
-  ['YYJ', 'SEA'], ['PSC', 'SEA'], ['BLI', 'PAE'], ['YKM', 'SEA'],
-  ['SEA', 'PDX'], ['SEA', 'GEG'], ['SEA', 'YVR'], ['SEA', 'BOI'],
-  ['SEA', 'SLC'], ['SEA', 'EUG'], ['PAE', 'SEA'], ['SEA', 'BLI'],
-  ['PDX', 'PAE'], ['SEA', 'YYJ'], ['GEG', 'PDX'], ['YVR', 'PDX']
-];
+/* Idle traffic -- and the one place in the piece that isn't about us.
 
-const AMBIENT_AIRLINES = ['AS', 'QX', 'DL', 'UA', 'AA', 'WN', 'B6', 'AC', 'F9', 'NK'];
+   These are real services. Every airline here genuinely flies the route it is
+   paired with, which is the whole joke: Paine Field gets Alaska and nothing
+   else, because that is all that flies out of Paine Field, and the only other
+   thing leaving Everett is a Boeing test aircraft going out to Moses Lake and
+   back, which is what BOE on a callsign means. Nobody has to notice. Someone
+   who knows the airport will.
+
+   The flight numbers are representative rather than current -- airlines
+   renumber every schedule, and this has to work offline five years from now.
+   The airline-and-route pairings are the part that is true.
+
+       [ callsign, from, to ]                                                */
+const AMBIENT_FLIGHTS = [
+  /* Alaska, out of its own hub. */
+  ['AS 811',  'SEA', 'ANC'], ['AS 810',  'ANC', 'SEA'],
+  ['AS 91',   'SEA', 'JNU'],
+  ['AS 356',  'SEA', 'SFO'], ['AS 357',  'SFO', 'SEA'],
+  ['AS 486',  'SEA', 'LAX'], ['AS 487',  'LAX', 'SEA'],
+  ['AS 566',  'SEA', 'SAN'],
+  ['AS 476',  'SEA', 'SNA'],
+  ['AS 632',  'SEA', 'PHX'], ['AS 633',  'PHX', 'SEA'],
+  ['AS 1210', 'SEA', 'LAS'], ['AS 1211', 'LAS', 'SEA'],
+  ['AS 1268', 'SEA', 'DEN'],
+  ['AS 26',   'SEA', 'ORD'],
+  ['AS 12',   'SEA', 'EWR'],
+  ['AS 1088', 'SEA', 'MCO'],
+
+  /* Horizon, which is what most of the small fields see. */
+  ['QX 2405', 'SEA', 'PDX'], ['QX 2404', 'PDX', 'SEA'],
+  ['QX 2168', 'SEA', 'GEG'], ['QX 2169', 'GEG', 'SEA'],
+  ['QX 2118', 'SEA', 'BOI'],
+  ['QX 2384', 'SEA', 'EUG'],
+  ['QX 2216', 'SEA', 'MFR'],
+  ['QX 2262', 'SEA', 'PSC'], ['QX 2263', 'PSC', 'SEA'],
+  ['QX 2454', 'SEA', 'YKM'],
+  ['QX 2088', 'SEA', 'PUW'],
+  ['QX 2314', 'SEA', 'RDM'],
+  ['QX 2340', 'SEA', 'BZN'],
+  ['QX 2078', 'SEA', 'MSO'],
+  ['QX 2148', 'SEA', 'SUN'],
+  ['QX 2492', 'SEA', 'YVR'], ['QX 2493', 'YVR', 'SEA'],
+  ['QX 2436', 'YYJ', 'SEA'],
+
+  /* Everyone else's Seattle. */
+  ['DL 1836', 'SEA', 'SLC'], ['DL 1837', 'SLC', 'SEA'],
+  ['DL 458',  'SEA', 'LAX'],
+  ['DL 1620', 'SEA', 'SFO'],
+  ['UA 1554', 'SEA', 'DEN'], ['UA 2117', 'DEN', 'SEA'],
+  ['UA 690',  'SEA', 'SFO'],
+  ['UA 1782', 'SEA', 'ORD'],
+  ['UA 452',  'SEA', 'EWR'],
+  ['AA 1086', 'SEA', 'PHX'],
+  ['AA 2394', 'SEA', 'ORD'],
+  ['AA 634',  'SEA', 'LAX'],
+  ['WN 1416', 'SEA', 'LAS'],
+  ['WN 2270', 'SEA', 'DEN'],
+  ['WN 508',  'SEA', 'PHX'],
+  ['WN 3311', 'SEA', 'SAN'],
+  ['AC 8074', 'SEA', 'YVR'],
+  ['AC 8332', 'SEA', 'YYC'],
+  ['AC 546',  'SEA', 'YYZ'],
+  ['F9 1252', 'SEA', 'DEN'],
+  ['NK 1664', 'SEA', 'LAS'],
+
+  /* The long-haul out of Seattle happens to leave for three of the places we
+     went. Nothing arranged about it -- Delta, ANA and Icelandair all fly it. */
+  ['DL 167',  'SEA', 'HND'], ['DL 168',  'HND', 'SEA'],
+  ['NH 177',  'SEA', 'NRT'], ['NH 178',  'NRT', 'SEA'],
+  ['FI 680',  'SEA', 'KEF'], ['FI 681',  'KEF', 'SEA'],
+
+  /* Paine Field: Alaska, and Boeing going out to Moses Lake to fly circles. */
+  ['AS 2604', 'PAE', 'PDX'], ['AS 2605', 'PDX', 'PAE'],
+  ['AS 1274', 'PAE', 'LAS'], ['AS 1275', 'LAS', 'PAE'],
+  ['AS 1114', 'PAE', 'SFO'], ['AS 1115', 'SFO', 'PAE'],
+  ['AS 1006', 'PAE', 'SAN'],
+  ['AS 1178', 'PAE', 'LAX'],
+  ['AS 1180', 'PAE', 'SNA'],
+  ['AS 2612', 'PAE', 'GEG'],
+  ['BOE 271', 'PAE', 'MWH'], ['BOE 004', 'MWH', 'PAE']
+];
 
 /* ==========================================================================
    ACT TWO -- the scrapbook.
