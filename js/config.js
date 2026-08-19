@@ -105,9 +105,12 @@ const CONFIG = {
   AMBIENT_COUNT: 5,
   AMBIENT_SPEED: 0.018,     // fraction of route per second -- a slow drift
 
-  /* --- hero flights -------------------------------------------------------- */
-  HERO_BOW: 0.9,            // slight per-flight arc offset so shared legs fan apart
-  LEG_DWELL_FRACTION: 0.06, // pause at a connecting airport, as a fraction of the flight
+  /* --- the departure network ------------------------------------------------
+     Nothing leaves an airport until a flight has arrived there, so the map
+     grows outward from Seattle rather than appearing all at once. */
+  HERO_BOW: 0.9,            // slight per-flight arc offset so parallel routes separate
+  TURNAROUND: 0.10,         // pause between landing somewhere and departing it again
+  STAGGER: 0.16,            // spacing between flights leaving the same airport
   PLANE_SIZE: 17,
   HERO_PLANE_SIZE: 23
 };
@@ -121,35 +124,16 @@ const TITLE = {
 };
 
 /* --------------------------------------------------------------------------
-   Airports. lat/lon of the field itself.
+   The network.
+
+   Airports and routes come from data/routes.js, generated out of the Flighty
+   export by tools/build_routes.py. Re-run that script after changing the CSV;
+   don't edit the generated file.
+
+   The regional fields below are only ever used by the idle traffic in the cold
+   open -- they're generic Seattle-area arrivals, not trips anyone took.
    -------------------------------------------------------------------------- */
-const AIRPORTS = {
-  SEA: { name: 'Seattle-Tacoma',   lat:  47.4502, lon: -122.3088 },
-  PAE: { name: 'Paine Field',      lat:  47.9063, lon: -122.2816 },
-
-  /* hero destinations */
-  ANC: { name: 'Anchorage',        lat:  61.1743, lon: -149.9962 },
-  AMS: { name: 'Amsterdam',        lat:  52.3105, lon:    4.7683 },
-  BKK: { name: 'Bangkok',          lat:  13.6900, lon:  100.7501 },
-  CDG: { name: 'Paris',            lat:  49.0097, lon:    2.5479 },
-  CUN: { name: 'Cancun',           lat:  21.0365, lon:  -86.8771 },
-  DXB: { name: 'Dubai',            lat:  25.2532, lon:   55.3657 },
-  FCO: { name: 'Rome',             lat:  41.8003, lon:   12.2389 },
-  HND: { name: 'Tokyo Haneda',     lat:  35.5494, lon:  139.7798 },
-  ICN: { name: 'Seoul',            lat:  37.4602, lon:  126.4407 },
-  JFK: { name: 'New York',         lat:  40.6413, lon:  -73.7781 },
-  KEF: { name: 'Reykjavik',        lat:  63.9850, lon:  -22.6056 },
-  LAX: { name: 'Los Angeles',      lat:  33.9416, lon: -118.4085 },
-  LHR: { name: 'London',           lat:  51.4700, lon:   -0.4543 },
-  LIH: { name: 'Kauai',            lat:  21.9760, lon: -159.3390 },
-  NRT: { name: 'Tokyo Narita',     lat:  35.7647, lon:  140.3864 },
-  OGG: { name: 'Maui',             lat:  20.8986, lon: -156.4305 },
-  SAN: { name: 'San Diego',        lat:  32.7336, lon: -117.1897 },
-  SFO: { name: 'San Francisco',    lat:  37.6213, lon: -122.3790 },
-  SIN: { name: 'Singapore',        lat:   1.3644, lon:  103.9915 },
-  TPE: { name: 'Taipei',           lat:  25.0777, lon:  121.2328 },
-
-  /* regional fields, used by the idle traffic */
+const REGIONAL_FIELDS = {
   BLI: { name: 'Bellingham',       lat:  48.7927, lon: -122.5375 },
   BOI: { name: 'Boise',            lat:  43.5644, lon: -116.2228 },
   DEN: { name: 'Denver',           lat:  39.8561, lon: -104.6737 },
@@ -160,41 +144,14 @@ const AIRPORTS = {
   PSC: { name: 'Pasco',            lat:  46.2647, lon: -119.1190 },
   SLC: { name: 'Salt Lake City',   lat:  40.7899, lon: -111.9791 },
   YKM: { name: 'Yakima',           lat:  46.5682, lon: -120.5440 },
-  YVR: { name: 'Vancouver',        lat:  49.1967, lon: -123.1815 },
   YYJ: { name: 'Victoria',         lat:  48.6469, lon: -123.4258 }
 };
 
-/* --------------------------------------------------------------------------
-   The flights that launch on space.
+const AIRPORTS = Object.assign({}, REGIONAL_FIELDS, ROUTE_DATA.airports);
 
-   `legs` is the list of stops after the origin. One entry is a nonstop; two
-   entries is a connection -- the aircraft lands, its stopover gets a label,
-   then it continues. Trips sharing a connection fan out from it.
-
-   Swap these for real trips: origin, then wherever you actually went.
-   -------------------------------------------------------------------------- */
-const HERO_ROUTES = [
-  { callsign: 'AS 811',  origin: 'SEA', legs: ['ANC'] },
-  { callsign: 'AS 8',    origin: 'SEA', legs: ['JFK'] },
-  { callsign: 'AS 852',  origin: 'SEA', legs: ['OGG'] },
-  { callsign: 'BA 48',   origin: 'SEA', legs: ['LHR'] },
-  { callsign: 'AF 365',  origin: 'SEA', legs: ['CDG'] },
-  { callsign: 'KE 20',   origin: 'SEA', legs: ['ICN'] },
-  { callsign: 'EK 230',  origin: 'SEA', legs: ['DXB'] },
-
-  /* connections -- two legs, fanning out from a shared stopover */
-  { callsign: 'DL 167',  origin: 'SEA', legs: ['NRT', 'BKK'] },
-  { callsign: 'NH 179',  origin: 'SEA', legs: ['NRT', 'SIN'] },
-  { callsign: 'AS 1032', origin: 'SEA', legs: ['LAX', 'LIH'] },
-  { callsign: 'AS 1119', origin: 'SEA', legs: ['LAX', 'CUN'] },
-  { callsign: 'DL 173',  origin: 'SEA', legs: ['AMS', 'FCO'] },
-
-  /* out of Paine Field */
-  { callsign: 'QX 2140', origin: 'PAE', legs: ['SFO'] },
-  { callsign: 'AS 1085', origin: 'PAE', legs: ['SAN'] },
-  { callsign: 'BOE 271', origin: 'PAE', legs: ['TPE'] },
-  { callsign: 'BOE 4',   origin: 'PAE', legs: ['KEF', 'HND'] }
-];
+/* Every route the sequence flies, already in dependency order: each one
+   departs an airport an earlier route has reached. */
+const HERO_ROUTES = ROUTE_DATA.routes;
 
 /* Idle traffic: where the cold-open flights come from and go to. */
 const AMBIENT_ROUTES = [

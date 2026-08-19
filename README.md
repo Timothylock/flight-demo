@@ -62,6 +62,7 @@ Only needed if you want different coverage — the output is committed.
 ```
 python3 tools/fetch_tiles.py    # basemap tiles -> tiles/
 python3 tools/build_world.py    # coastlines, borders, lakes -> data/world.js
+python3 tools/build_routes.py   # the flight network -> data/routes.js
 ```
 
 `fetch_tiles.py` skips what it already has and writes `tiles/manifest.js` so
@@ -77,13 +78,14 @@ as a stutter the entire way out.
 
 | | |
 |---|---|
-| `js/config.js` | routes, airports, timing, palette |
+| `js/config.js` | timing, palette, idle traffic |
+| `data/routes.js` | the flight network (generated) |
 | `js/geo.js` | Mercator, great circles, unwrapped longitude |
 | `js/camera.js` | centre/zoom, projection, the fitted final view |
 | `js/tiles.js` | raster basemap, Puget Sound only |
 | `js/worldlayer.js` | coastlines, borders, lakes |
 | `js/radar.js` | rings and the sweep |
-| `js/flights.js` | aircraft, routes, the departure bank |
+| `js/flights.js` | aircraft, routes, the spreading schedule |
 | `js/airports.js` | markers and their reveal |
 | `js/labels.js` | keeps labels from stacking |
 | `js/sequence.js` | the state machine driving all of it |

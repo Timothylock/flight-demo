@@ -182,63 +182,74 @@ const Flights = (function () {
 
   /* ------------------------------------------------------------------ hero */
 
-  /* Lay out the whole departure bank on one clock: longest trips leave first,
-     everyone is on the ground before the title card. */
+  /* Schedule the network.
+
+     Every route waits for its origin to be reached. SEA and PAE are reachable
+     from the start; everywhere else opens up the moment a flight lands there,
+     and then starts sending flights of its own. The result cascades outward
+     instead of firing all at once, and a two-leg trip -- Seattle to Vancouver
+     to Sapporo -- falls out of the ordering for free: the second leg simply
+     can't leave until the first has arrived.
+
+     Times are computed in arbitrary units first, because a flight's departure
+     depends on other flights' durations, then scaled once at the end so the
+     last arrival lands exactly on the beat. */
   function buildHero() {
     heroes.length = 0;
     const SEQ = CONFIG.SEQUENCE_SECONDS;
-    const win = CONFIG.BEATS.launchWindow;
-    const launch0 = win[0] * SEQ, launch1 = win[1] * SEQ;
     const landed = CONFIG.BEATS.allLanded * SEQ;
+    const launch0 = CONFIG.BEATS.launchWindow[0] * SEQ;
 
     const built = HERO_ROUTES.map(function (spec, index) {
-      const stops = [spec.origin].concat(spec.legs);
       const bow = CONFIG.HERO_BOW * (index % 2 ? 1 : -1) * (0.6 + (index % 3) * 0.3);
-      const segs = [];
-      let km = 0;
-      for (let i = 1; i < stops.length; i++) {
-        const seg = route(stops[i - 1], stops[i], bow, 110);
-        segs.push(seg);
-        km += seg.km;
-      }
+      const seg = route(spec.from, spec.to, bow, 110);
       return {
-        callsign: spec.callsign,
-        stops: stops,
-        segs: segs,
-        km: km,
+        callsign: spec.callsign || (spec.from + '-' + spec.to),
+        stops: [spec.from, spec.to],
+        booked: !!spec.booked,
+        segs: [seg],
+        km: seg.km,
         index: index
       };
     });
 
-    /* Longest first, so the far side of the world isn't still empty when the
-       title lands. */
-    built.sort(function (a, b) { return b.km - a.km; });
+    /* Flight time grows with distance, but sub-linearly -- otherwise Hong Kong
+       takes so long that the short hops look frozen. */
+    let mean = 0;
+    built.forEach(function (f) { f.raw = Math.pow(f.km, 0.7); mean += f.raw; });
+    mean /= Math.max(1, built.length);
 
-    const n = built.length;
-    built.forEach(function (f, i) {
-      f.t0 = launch0 + (n === 1 ? 0 : (i / (n - 1)) * (launch1 - launch0));
+    const turnaround = mean * CONFIG.TURNAROUND;
+    const stagger = mean * CONFIG.STAGGER;
+
+    const reachedAt = {};
+    ROUTE_DATA.home.forEach(function (code) { reachedAt[code] = 0; });
+    const lastDeparture = {};
+
+    let latest = 0;
+    built.forEach(function (f) {
+      const from = f.stops[0], to = f.stops[1];
+      const ready = (reachedAt[from] === undefined ? 0 : reachedAt[from]) +
+                    (reachedAt[from] > 0 ? turnaround : 0);
+      /* Space out flights leaving the same field so they don't overlap. */
+      const dep = Math.max(ready, (lastDeparture[from] || 0) + stagger);
+      lastDeparture[from] = dep;
+
+      f.t0 = dep;
+      f.segs[0].start = dep;
+      f.segs[0].end = dep + f.raw;
+      f.tEnd = f.segs[0].end;
+      if (reachedAt[to] === undefined || f.tEnd < reachedAt[to]) reachedAt[to] = f.tEnd;
+      if (f.tEnd > latest) latest = f.tEnd;
     });
 
-    /* One shared speed constant: flight time scales with distance^0.7, so long
-       hauls take longer without the short hops looking stalled. Pick the
-       constant so the slowest flight lands exactly on the beat. */
-    let k = Infinity;
+    /* One scale factor puts the whole cascade inside the sequence. */
+    const scale = latest > 0 ? (landed - launch0) / latest : 1;
     built.forEach(function (f) {
-      const dwellCount = f.segs.length - 1;
-      const budget = (landed - f.t0) / (1 + dwellCount * CONFIG.LEG_DWELL_FRACTION);
-      k = Math.min(k, budget / Math.pow(f.km, 0.7));
-    });
-
-    built.forEach(function (f) {
-      let t = f.t0;
-      const flightTime = k * Math.pow(f.km, 0.7);
-      const dwell = flightTime * CONFIG.LEG_DWELL_FRACTION;
-      f.segs.forEach(function (seg, i) {
-        seg.start = t;
-        seg.end = t + flightTime * (seg.km / f.km);
-        t = seg.end + (i < f.segs.length - 1 ? dwell : 0);
-      });
-      f.tEnd = f.segs[f.segs.length - 1].end;
+      f.t0 = launch0 + f.t0 * scale;
+      f.segs[0].start = launch0 + f.segs[0].start * scale;
+      f.segs[0].end = launch0 + f.segs[0].end * scale;
+      f.tEnd = f.segs[0].end;
       f.arrived = [];
       heroes.push(f);
     });
@@ -287,19 +298,27 @@ const Flights = (function () {
     ctx.strokeStyle = CONFIG.COLORS.trail;
     ctx.lineCap = 'round';
 
-    ctx.globalAlpha = opacity * 0.34;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let i = 0; i < heroes.length; i++) {
-      const f = heroes[i];
-      const st = heroState(f, t);
-      if (!st) continue;
-      for (let s = 0; s <= st.legIndex; s++) {
-        const upto = s < st.legIndex || st.waiting || st.done ? 1 : st.f;
-        strokeSegment(ctx, f.segs[s], 0, upto);
+    /* Flown routes solid, booked ones dashed -- the places we've been and the
+       places we're going shouldn't read as the same thing. */
+    for (let pass = 0; pass < 2; pass++) {
+      const booked = pass === 1;
+      ctx.setLineDash(booked ? [5, 6] : []);
+      ctx.globalAlpha = opacity * (booked ? 0.26 : 0.34);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i < heroes.length; i++) {
+        const f = heroes[i];
+        if (!!f.booked !== booked) continue;
+        const st = heroState(f, t);
+        if (!st) continue;
+        for (let s = 0; s <= st.legIndex; s++) {
+          const upto = s < st.legIndex || st.waiting || st.done ? 1 : st.f;
+          strokeSegment(ctx, f.segs[s], 0, upto);
+        }
       }
+      ctx.stroke();
     }
-    ctx.stroke();
+    ctx.setLineDash([]);
 
     ctx.globalAlpha = opacity * 0.55;
     ctx.lineWidth = 1.6;
@@ -333,13 +352,14 @@ const Flights = (function () {
       const p = Camera.project(at.lat, at.lon);
       if (!Camera.onScreen(p, 140)) continue;
 
+      if (f.booked) alpha *= 0.6;
       drawPlane(ctx, p.x, p.y, at.heading, CONFIG.HERO_PLANE_SIZE,
                 CONFIG.COLORS.hero, alpha, 6);
 
-      const dest = f.stops[f.stops.length - 1];
+      const dest = f.stops[1];
       const ly = drawLabel(ctx, 'hi:' + f.callsign, p.x + 14, p.y - 15, f.callsign,
                            alpha * 0.95, CONFIG.COLORS.heroLabel, 12);
-      drawLabel(ctx, null, p.x + 14, p.y - 3, f.stops[st.legIndex] + '→' + dest,
+      drawLabel(ctx, null, p.x + 14, p.y - 3, f.stops[0] + '→' + dest,
                 alpha * 0.55, CONFIG.COLORS.label, 10, ly + 12);
     }
   }
@@ -354,7 +374,7 @@ const Flights = (function () {
     const seen = {};
     const out = [];
     HERO_ROUTES.forEach(function (spec) {
-      [spec.origin].concat(spec.legs).forEach(function (code) {
+      [spec.from, spec.to].forEach(function (code) {
         if (!seen[code]) { seen[code] = true; out.push(code); }
       });
     });

@@ -79,13 +79,19 @@ const Camera = {
     const spanX = Math.max(1e-6, (maxX - minX) / (1 - 2 * pad));
     const spanY = Math.max(1e-6, (maxY - minY) / (1 - 2 * pad));
 
-    /* Fit the content into the frame, less the strip held back for the title. */
+    /* Fit the content into the frame, less the strip held back for the title.
+       The smaller of the two fits is the one that gets everything on screen. */
     const usableH = this.height * (1 - reserve);
-    const zoom = Math.min(
+    const fitted = Math.min(
       Math.log2(this.width / (spanX * 256)),
-      Math.log2(usableH / (spanY * 256)),
-      Math.log2(this.width * (CONFIG.WORLD_ZOOM_PADDING || 1) / 256)
+      Math.log2(usableH / (spanY * 256))
     );
+
+    /* Floor, not ceiling: pulling back past a world-width starts showing the
+       map repeating itself, so that's as far out as we ever go. It must never
+       drag the camera further out than the fit already asked for. */
+    const widest = Math.log2(this.width / (256 * (CONFIG.WORLD_ZOOM_PADDING || 1)));
+    const zoom = Math.max(fitted, widest);
 
     /* Lift the routes above the words: moving the camera centre south (a
        larger Mercator y) slides the content up the screen, into the space the
