@@ -9,6 +9,7 @@ const Flights = (function () {
 
   const ambient = [];
   const heroes = [];
+  let reached = {};        // airport -> the second its first arrival lands
 
   /* ---------------------------------------------------------------- shared */
 
@@ -250,6 +251,7 @@ const Flights = (function () {
     const reachedAt = {};
     ROUTE_DATA.home.forEach(function (code) { reachedAt[code] = 0; });
     const lastDeparture = {};
+    reached = reachedAt;
 
     let latest = 0;
     built.forEach(function (f) {
@@ -274,6 +276,9 @@ const Flights = (function () {
 
     /* One scale factor puts the whole cascade inside the sequence. */
     const scale = latest > 0 ? (landed - launch0) / latest : 1;
+    Object.keys(reachedAt).forEach(function (code) {
+      reachedAt[code] = launch0 + reachedAt[code] * scale;
+    });
     built.forEach(function (f) {
       f.t0 = launch0 + f.t0 * scale;
       f.segs.forEach(function (seg) {
@@ -419,7 +424,17 @@ const Flights = (function () {
     return out;
   }
 
+  /* Where a hero flight is right now, for the camera to keep in frame. */
+  function positionAt(f, t) {
+    const st = heroState(f, t);
+    if (!st) return null;
+    const at = Geo.alongPath(st.seg.pts, st.seg.acc, st.f);
+    return { lat: at.lat, lon: at.lon, progress: st.f, seg: st.seg };
+  }
+
   return {
+    reachedAt: function () { return reached; },
+    positionAt: positionAt,
     heroStops: heroStops,
     buildAmbient: buildAmbient,
     updateAmbient: updateAmbient,

@@ -52,6 +52,7 @@
     Flights.drawAmbient(ctx, s.ambient * s.dim);
     Flights.drawHero(ctx, heroT, s.hero * s.dim);
 
+    Narration.update(heroT, s.narration);
     titleEl.style.opacity = s.title;
   }
 
@@ -98,6 +99,7 @@
 
   line1El.textContent = TITLE.line1;
   line2El.textContent = TITLE.line2;
+  Narration.build();
 
   resize();
   Sequence.toIdle();

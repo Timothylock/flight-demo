@@ -55,19 +55,33 @@ const Camera = {
      refuses to pull back further than a world-width, which is the point past
      which you'd start seeing the map repeat. */
   worldView: function () {
+    return this.fitTo(Flights.heroStops());
+  },
+
+  /* Fit a set of airports into the frame, less the strip held back for text.
+
+     This is the same operation whether it's the final view or the live one:
+     the sequence follows the network by fitting whatever has been reached so
+     far, and once everything is reached that is the final view, so the two
+     converge with nothing to keep in step. */
+  fitTo: function (codes, points) {
     const anchor = CONFIG.WORLD.lon;
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
 
-    Flights.heroStops().forEach(function (code) {
-      const a = AIRPORTS[code];
-      if (!a) return;
-      const x = Geo.mercX(Geo.unwrap(a.lon, anchor));
-      const y = Geo.mercY(a.lat);
+    function include(lat, lon) {
+      const x = Geo.mercX(Geo.unwrap(lon, anchor));
+      const y = Geo.mercY(lat);
       if (x < minX) minX = x;
       if (x > maxX) maxX = x;
       if (y < minY) minY = y;
       if (y > maxY) maxY = y;
+    }
+
+    codes.forEach(function (code) {
+      const a = AIRPORTS[code];
+      if (a) include(a.lat, a.lon);
     });
+    if (points) points.forEach(function (p) { include(p.lat, p.lon); });
 
     if (!isFinite(minX)) {
       return { lat: CONFIG.WORLD.lat, lon: anchor,
@@ -89,9 +103,13 @@ const Camera = {
 
     /* Floor, not ceiling: pulling back past a world-width starts showing the
        map repeating itself, so that's as far out as we ever go. It must never
-       drag the camera further out than the fit already asked for. */
+       drag the camera further out than the fit already asked for.
+
+       The ceiling is the cold-open zoom: early on, when only SEA and PAE are
+       reached, fitting two fields thirty miles apart would put the camera on
+       the runway. */
     const widest = Math.log2(this.width / (256 * (CONFIG.WORLD_ZOOM_PADDING || 1)));
-    const zoom = Math.max(fitted, widest);
+    const zoom = Math.min(this.homeZoom(), Math.max(fitted, widest));
 
     /* Lift the routes above the words: moving the camera centre south (a
        larger Mercator y) slides the content up the screen, into the space the

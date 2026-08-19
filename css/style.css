@@ -74,3 +74,56 @@ body.hide-cursor { cursor: none; }
   color: #cfcfcf;
   text-shadow: 0 0 18px rgba(255,255,255,0.18);
 }
+
+/* The narration: lines carried through the flying, in the same band the title
+   card will use. Quieter than the finale on purpose -- same shapes, smaller
+   and dimmer -- so the last card still reads as the crescendo. */
+#narration {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 8vw 12vh;
+}
+
+#narration::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top,
+              rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.58) 20%,
+              rgba(0,0,0,0.22) 38%, rgba(0,0,0,0) 55%);
+}
+
+.narration-beat {
+  position: absolute;
+  bottom: 12vh;
+  left: 8vw;
+  right: 8vw;
+  text-align: center;
+  opacity: 0;
+}
+
+.narration-line1 {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(13px, 1.55vw, 30px);
+  font-weight: 500;
+  letter-spacing: 0.30em;
+  text-indent: 0.30em;
+  text-transform: uppercase;
+  color: #e8e8e8;
+  text-shadow: 0 0 22px rgba(255,255,255,0.28);
+  line-height: 1.6;
+}
+
+.narration-line2 {
+  margin-top: 1.4vh;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: clamp(12px, 1.35vw, 27px);
+  letter-spacing: 0.05em;
+  color: #b6b6b6;
+  text-shadow: 0 0 16px rgba(255,255,255,0.15);
+}

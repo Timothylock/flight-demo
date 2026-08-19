@@ -49,11 +49,33 @@ The final camera view fits itself to wherever the routes actually go, so a set
 of trips that never leaves Europe ends on Europe rather than on the whole
 globe. Nothing to retune.
 
-**The words.** `TITLE`, two lines.
+**The words.** `NARRATION` in `js/config.js` is the script -- lines carried
+through the flying rather than saved for the end. Each beat has an `at` (a
+fraction of the sequence) and a `hold`, and optionally `after: 'YYZ'`, which
+pins it to a place: the Toronto line cannot appear until a flight has actually
+landed in Toronto. So the words stay with the picture even if the flights are
+re-generated from a new export.
+
+Beats always play in the order written, each waiting for the previous to clear.
+If the script runs past the title card the holds are squeezed rather than left
+to collide, so nothing breaks -- but it's better to give it room by raising
+`SEQUENCE_SECONDS`.
+
+`TITLE` is the last beat, after the narration has run.
+
+The narration in the repo is a **draft**. Its facts are true to the CSV -- the
+mileage, the dates, the counts -- but the sentiment is guesswork. Rewrite it.
 
 **The timing.** `SEQUENCE_SECONDS` is the whole show, launch to title card.
 Every other beat is a fraction of it, so changing that one number retimes the
-piece. `HOLD_SECONDS` is how long the finished frame sits before resetting.
+piece -- narration included. `HOLD_SECONDS` is how long the finished frame sits
+before resetting.
+
+**The camera** follows the network rather than a stopwatch: it fits whatever
+has been reached so far, plus anything airborne, so the frame always holds what
+the narration is talking about. It converges on the final view for free -- once
+everywhere is reached, the fit is the final view. `CAMERA_FOLLOW_TAU` sets how
+languidly it settles.
 
 ## Rebuilding the assets
 

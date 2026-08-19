@@ -20,7 +20,8 @@ const Sequence = (function () {
     hero: 0,
     title: 0,
     dim: 1,               // everything under the title card fades back a little
-    radar: 1              // the sweep: cold open only
+    radar: 1,             // the sweep: cold open only
+    narration: 0          // the lines carried through the flying
   };
 
   function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
@@ -58,6 +59,44 @@ const Sequence = (function () {
     Camera.set(Geo.invMercY(y), Geo.invMercX(x), from.zoom + (to.zoom - from.zoom) * e);
   }
 
+  /* Exponential smoothing towards the target view. Fitting exactly every
+     frame would snap the camera each time a flight lands; this glides. */
+  function followNetwork(t, dt) {
+    const reached = Flights.reachedAt();
+    const codes = [];
+    Object.keys(reached).forEach(function (code) {
+      if (reached[code] <= t) codes.push(code);
+    });
+    /* Aircraft in the air are held in frame by their live position, and their
+       destination is folded in only once they're well on the way. Opening the
+       frame the instant a Hong Kong flight pushes back would swing the camera
+       out to the far side of the world with nothing there yet, and then leave
+       it sitting still for the rest of the sequence. */
+    const points = [];
+    Flights.heroes.forEach(function (f) {
+      if (t < f.t0 || t > f.tEnd) return;
+      const at = Flights.positionAt(f, t);
+      if (at) {
+        points.push(at);
+        if (at.progress > 0.35) {
+          const dest = at.seg.to;
+          if (codes.indexOf(dest) < 0) codes.push(dest);
+        }
+      }
+    });
+    if (!codes.length && !points.length) return;
+
+    const target = Camera.fitTo(codes, points);
+    const k = 1 - Math.exp(-dt / CONFIG.CAMERA_FOLLOW_TAU);
+
+    const cx = Geo.mercX(Camera.lon) + (Geo.mercX(target.lon) - Geo.mercX(Camera.lon)) * k;
+    const cy = Geo.mercY(Camera.lat) + (Geo.mercY(target.lat) - Geo.mercY(Camera.lat)) * k;
+    /* Only ever open out during the run -- a newly reached airport must never
+       make the camera dive back in. */
+    const zoom = Math.min(Camera.zoom, Camera.zoom + (target.zoom - Camera.zoom) * k);
+    Camera.set(Geo.invMercY(cy), Geo.invMercX(cx), zoom);
+  }
+
   function homeView() {
     return { lat: CONFIG.HOME.lat, lon: CONFIG.HOME.lon, zoom: Camera.homeZoom() };
   }
@@ -75,6 +114,8 @@ const Sequence = (function () {
     state.title = 0;
     state.dim = 1;
     state.radar = 1;
+    state.narration = 0;
+    Narration.clear();
     Flights.clearHero();
     Flights.buildAmbient();
     Airports.reset();
@@ -123,13 +164,26 @@ const Sequence = (function () {
          job, and a line rotating over the departures just fights them. */
       state.radar = 1 - smooth(ramp(t, B.mapFadeIn[0] * SEQ, B.mapFadeIn[1] * SEQ));
 
+      /* Narration gives way to the title card rather than sharing the frame. */
+      state.narration = 1 - state.title;
+
       Flights.updateAmbient(dt, state.ambient > 0.01);
       Flights.updateHero(t, function (code) { Airports.reveal(code, t); });
 
       state.dim = 1 - state.title * (1 - CONFIG.TITLE_DIM);
 
-      const e = easePullBack(ramp(t, B.zoomOut[0] * SEQ, B.zoomOut[1] * SEQ));
-      lerpCamera(homeView(), worldView(), e);
+      /* The camera follows the network rather than a stopwatch.
+
+         On a fixed pull-back the two drift apart: the flights reached Toronto
+         a third of the way in while the camera was still over Puget Sound, so
+         the narration talked about a city that wasn't on screen. Fitting to
+         what has actually been reached -- plus where anything airborne is
+         headed, so the frame opens ahead of the aircraft rather than chasing
+         them -- keeps the picture and the words describing the same thing.
+
+         It converges on the final view for free: once everywhere is reached,
+         the fit IS the final view. */
+      followNetwork(t, dt);
 
       if (t >= SEQ) {
         state.phase = 'HOLD';
@@ -142,6 +196,7 @@ const Sequence = (function () {
       state.title = 1;
       state.dim = CONFIG.TITLE_DIM;
       state.radar = 0;
+      state.narration = 0;
       lerpCamera(worldView(), worldView(), 1);
       if (state.t >= CONFIG.HOLD_SECONDS) {
         state.phase = 'RESET';
@@ -156,6 +211,7 @@ const Sequence = (function () {
 
       state.title = 1 - smooth(ramp(t, 0.00, 0.28));
       state.dim = 1 - state.title * (1 - CONFIG.TITLE_DIM);
+      state.narration = 0;
       state.hero = 1 - smooth(ramp(t, 0.08, 0.45));
       state.map = 1 - smooth(ramp(t, 0.55, 1.00));
       state.ambient = smooth(ramp(t, 0.62, 1.00));

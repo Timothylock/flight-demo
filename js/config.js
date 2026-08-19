@@ -13,7 +13,7 @@ const CONFIG = {
      SEQUENCE_SECONDS is the whole show: launch -> zoom out -> everyone
      landed -> title card. Every other beat below is a fraction of it, so
      changing this one number retimes the entire piece.                     */
-  SEQUENCE_SECONDS: 30,
+  SEQUENCE_SECONDS: 85,
 
   /* How long the finished world view holds before it resets itself. */
   HOLD_SECONDS: 12,
@@ -28,11 +28,13 @@ const CONFIG = {
     launchWindow:  [0.10, 0.26],   // hero flights leave, staggered
     zoomOut:       [0.12, 0.78],   // camera pulls back to the world
     allLanded:      0.84,          // last arrival, at the latest
-    titleFadeIn:   [0.87, 1.00]    // title card appears
+    titleFadeIn:   [0.92, 0.99]    // title card appears
   },
 
   /* How far the map dims under the title card. The airport codes stay
-     readable; the words become the thing you're looking at. */
+     readable; the words become the thing you're looking at. The narration
+     lines during the flight don't dim anything -- they sit in the band the
+     camera already keeps clear, so the map keeps flying underneath. */
   TITLE_DIM: 0.62,
 
   /* --- camera ------------------------------------------------------------ */
@@ -44,6 +46,7 @@ const CONFIG = {
      -- roughly "the middle of the map you want" -- and WORLD.lat is a fallback
      if there are no routes at all. */
   WORLD: { lat: 32.0, lon: -100.0 },
+  CAMERA_FOLLOW_TAU: 2.6,       // seconds for the camera to settle on a new fit
   WORLD_PADDING: 0.06,          // breathing room around the outermost airports
   WORLD_BOTTOM_RESERVE: 0.26,   // strip along the bottom kept clear for the title
   WORLD_ZOOM_PADDING: 1.04,     // never pull back further than one world-width
@@ -116,13 +119,68 @@ const CONFIG = {
   HERO_PLANE_SIZE: 23
 };
 
+
 /* --------------------------------------------------------------------------
-   The title card.
+   The narration.
+
+   Lines carried through the flying, not saved for the end. Each one appears at
+   `at` (a fraction of SEQUENCE_SECONDS) and holds for `hold` seconds.
+
+   `after` pins a beat to a place: the Toronto line cannot appear until a
+   flight has actually landed in Toronto, whatever the route data does. That
+   way the words stay with the picture if the flights are ever re-generated.
+
+   THESE ARE A DRAFT. The facts in them are true to the CSV -- the mileage, the
+   dates, the counts -- but the sentiment is a guess. Rewrite freely; nothing
+   here depends on the wording.
+   -------------------------------------------------------------------------- */
+const NARRATION = [
+  {
+    at: 0.05, hold: 5.5,
+    line1: 'Two airports, thirty-two miles apart',
+    line2: 'everything we have done starts from here'
+  },
+  {
+    at: 0.14, hold: 5.5, after: 'LAS',
+    line1: 'Some we barely planned',
+    line2: 'Vegas out of Paine Field, twice, on a whim'
+  },
+  {
+    at: 0.24, hold: 5.5, after: 'YYZ',
+    line1: 'Before it was Seattle, it was Toronto',
+    line2: 'fourteen years of leaving, and coming back'
+  },
+  {
+    at: 0.36, hold: 5.5, after: 'YEG',
+    line1: 'And all the small ones in between',
+    line2: 'the weekends, the long layovers, the flights home'
+  },
+  {
+    at: 0.50, hold: 5.5, after: 'HKG',
+    line1: 'Then further, and further again',
+    line2: 'Hong Kong, Tokyo, Taipei \u2014 the long way round'
+  },
+  {
+    at: 0.62, hold: 5.5, after: 'KEF',
+    line1: 'One hundred and eighty-eight thousand miles',
+    line2: 'seven and a half times around the world, together'
+  },
+  {
+    at: 0.74, hold: 5.5, after: 'CTS',
+    line1: 'The dotted line is January',
+    line2: 'and after that, wherever you want to go'
+  }
+];
+
+/* --------------------------------------------------------------------------
+   The title card -- the last beat, after the narration has run.
    -------------------------------------------------------------------------- */
 const TITLE = {
   line1: "WE'VE BEEN ON SO MANY ADVENTURES TOGETHER",
   line2: 'and every one of them started with you'
 };
+
+CONFIG.NARRATION = NARRATION;
 
 /* --------------------------------------------------------------------------
    The network.
