@@ -19,7 +19,7 @@ const CONFIG = {
   HOLD_SECONDS: 3,
 
   /* Act Two: the plane revisiting four places, building a scrapbook. */
-  ACT2_SECONDS: 20,
+  ACT2_SECONDS: 34,
 
   /* How long the drift back to Seattle takes. */
   RESET_SECONDS: 3.5,
@@ -399,7 +399,7 @@ CONFIG.SCRAPBOOK = {
 /* Beats within Act Two, in seconds. Everything left over after these is
    flying time, shared out by distance. */
 CONFIG.ACT2_PLANE_SIZE = 30;
-CONFIG.ACT2_HOLD = 1.9;      // pause over each destination
+CONFIG.ACT2_HOLD = 5.0;      // pause over each destination -- time to look at a photo
 CONFIG.ACT2_MIN_FLY = 1.1;   // shortest a leg may be, however near
 CONFIG.ACT2_SWEEP = 1.6;     // camera crossing to a leg that doesn't chain on
 CONFIG.ACT2_FINAL = 2.6;     // pull back at the end to hold the whole scrapbook

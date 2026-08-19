@@ -39,11 +39,18 @@ const Act2 = (function () {
       return i > 0 && specs[i - 1].to !== s.from;   // needs a camera sweep
     });
 
-    const holdEach = CONFIG.ACT2_HOLD;
+    /* The holds are the point of the act -- they're what gives you time to
+       look at a photograph -- so they get their share first. But four five
+       second pauses need a total that can carry them: if ACT2_SECONDS is ever
+       set too short for the holds plus the shortest possible flying, they
+       shrink to fit rather than squeezing the flying out of existence. */
     const sweepEach = CONFIG.ACT2_SWEEP;
-    const fixed = specs.length * holdEach +
-                  sweeps.filter(Boolean).length * sweepEach +
-                  CONFIG.ACT2_FINAL;
+    const sweepTotal = sweeps.filter(Boolean).length * sweepEach;
+    const minFlyTotal = specs.length * CONFIG.ACT2_MIN_FLY;
+    const holdRoom = Math.max(0, T - sweepTotal - CONFIG.ACT2_FINAL - minFlyTotal);
+    const holdEach = Math.min(CONFIG.ACT2_HOLD, holdRoom / specs.length);
+
+    const fixed = specs.length * holdEach + sweepTotal + CONFIG.ACT2_FINAL;
     const flyBudget = Math.max(1, T - fixed);
     const rawTotal = raw.reduce(function (a, b) { return a + b; }, 0);
 
