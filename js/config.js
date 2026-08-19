@@ -711,7 +711,7 @@ CONFIG.ACT4 = {
     { name: 'CARBONITE', corner: true, art: 'jail' },
     { name: 'Cerulean City',  color: '#3fa2d8', price: 140 },
     { name: 'Vermilion City', color: '#3fa2d8', price: 140 },
-    { name: 'Lapras',         color: '#8b95a3', price: 200, art: 'ship' },
+    { name: 'Anaheim',        color: '#a06fd6', price: 450 },
     { name: 'Hoth',           color: '#a6dcee', price: 180 },
     { name: 'Ilum',           color: '#a6dcee', price: 180 },
     { name: 'Chance',         color: '#6f7d8c', art: 'chance' },
@@ -719,7 +719,7 @@ CONFIG.ACT4 = {
     { name: 'CANTINA', corner: true, art: 'parking' },
     { name: 'Lavender Town',  color: '#d06fa8', price: 220 },
     { name: 'Saffron City',   color: '#d06fa8', price: 220 },
-    { name: 'X-Wing',         color: '#8b95a3', price: 200, art: 'ship' },
+    { name: 'Disneyland CA',  color: '#a06fd6', price: 500, art: 'castle' },
     { name: 'Endor',          color: '#4fae5f', price: 260 },
     { name: 'Kashyyyk',       color: '#4fae5f', price: 260 },
     { name: 'Kyber Forge',    color: '#6f7d8c', price: 150, art: 'util' },
@@ -736,11 +736,24 @@ CONFIG.ACT4 = {
   /* One per roll: a photograph and a line. Order is fixed; which square they
      land on is whatever the dice say. Files go in photos/ -- missing ones
      draw as empty frames, same as the other acts. */
+  /* The finish is arranged, and now it is arranged somewhere in particular.
+     Both tokens end on `finishOn`, and the landing before that pair is
+     `beforeFinish` -- named rather than indexed, so moving a tile around the
+     board doesn't quietly break it. Every roll is still an ordinary pair of
+     dice and no token moves further than it threw; the planner solves for the
+     dice that get there instead of throwing sequences away until one does.
+
+     Note the last two reveals share a square: one token arrives, then the
+     other joins it. That is the point of the act, and it is why Disneyland
+     gets two photographs. */
+  finishOn: 'Disneyland CA',
+  beforeFinish: 'Anaheim',
+
   reveals: [
-    { photo: 'board-1.jpg', line: 'four years of losing to you at everything' },
-    { photo: 'board-2.jpg', line: 'and still setting the board up again' },
+    { photo: 'board-1.jpg', line: 'five years of losing to you at everything' },
+    { photo: 'd23.jpeg',    line: 'the expo, the queue, the two of us in ears' },
     { photo: 'board-3.jpg', line: 'you always did pick the better piece' },
-    { photo: 'board-4.jpg', line: 'same square, every time' }
+    { photo: 'disney.jpeg', line: 'same square, every time' }
   ]
 };
 
@@ -775,7 +788,7 @@ CONFIG.MUSIC = {
    ========================================================================== */
 CONFIG.FINALE = {
   dir: 'photos/',
-  photo: 'finale.jpg',
+  photo: 'last.jpeg',
   line: 'happy anniversary, my favourite person to go anywhere with',
 
   fadeIn: 3.5,          // slow arrival out of the board

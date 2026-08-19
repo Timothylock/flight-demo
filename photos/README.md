@@ -23,14 +23,24 @@ detail in the corners.
 
 ## Act Four (the board)
 
-    board-1.jpg ... board-4.jpg
+    board-1.jpg   d23.jpeg   board-3.jpg   disney.jpeg
 
-One per dice roll, shown large in the middle of the board with the property
-name and a line underneath.
+One per dice roll, shown large in the middle of the board with the square's
+name and a line underneath, in that order.
+
+The last two are the point of the act. The dice are arranged so both tokens
+finish on **Disneyland CA**, and the landing before that pair is **Anaheim** --
+so `d23.jpeg` (the expo) lands on Anaheim, and `disney.jpeg` lands on
+Disneyland as the second token joins the first.
+
+Because both tokens land on Disneyland -- one arrives, then the other joins it
+-- that square gets two reveals. `board-3.jpg` is the first of them and wants a
+second Disneyland photograph; without one it draws as an empty frame between
+two real pictures.
 
 ## The finale
 
-    finale.jpg
+    last.jpeg
 
 One photograph, alone on black, held for ten seconds with a single line under
 it. It is the last thing seen before the radar comes back, so it wants to be

@@ -126,7 +126,7 @@ the rest still holds; the one in the repo runs 4:15, longer than the piece, so
 what you hear at the end is the fade rather than the track's own ending.
 
 **The last frame.** `CONFIG.FINALE` is the closing beat: one filename, one
-line, and `fadeIn` / `hold` / `fadeOut` in seconds. Drop `photos/finale.jpg` in
+line, and `fadeIn` / `hold` / `fadeOut` in seconds. Drop `photos/last.jpeg` in
 and rewrite the line -- the one in the repo is a placeholder like the rest of
 the script.
 
@@ -194,11 +194,21 @@ below water.
 
 In Act Four the dice genuinely drive the act: two of them settle on a number
 and a token counts out exactly that many squares, and whatever it lands on is
-what lights up. The only arranged part is the finish. The whole set of rolls is
-chosen before the act starts, by trying sequences until one ends with both
-tokens on the same square -- every roll stays an ordinary pair of dice and no
-token ever moves further than it threw. Because the second player lands on the
-first player's square, the last two reveals share a tile, which is the point.
+what lights up. The arranged part is the destination. The rolls are chosen
+before the act starts so that both tokens finish on `CONFIG.ACT4.finishOn` --
+Disneyland CA -- with `beforeFinish`, Anaheim, as the landing before that pair.
+Both are named rather than indexed, so moving a tile around the board doesn't
+quietly break the ending.
+
+The planner solves for the dice that cover each distance rather than throwing
+whole sequences away until one happens to work, but the honesty is unchanged:
+every roll is a pair two real dice could have thrown, and no token ever moves
+further than it threw. The free landings are held to squares worth
+photographing, so nobody's holiday gets captioned "go to jail".
+
+Because the second player lands on the first player's square, the last two
+reveals share a tile, which is the point -- and why Disneyland gets two
+photographs.
 
 Board text faces outward on all four sides, so the top row reads upside down
 exactly as it does on a real board -- that orientation is most of why a

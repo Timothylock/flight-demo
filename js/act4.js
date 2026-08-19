@@ -39,12 +39,94 @@ const Act4 = (function () {
 
   function roll() { return 1 + ((Math.random() * 6) | 0); }
 
+  function tileIndex(name) {
+    const list = CONFIG.ACT4.tiles;
+    for (let i = 0; i < list.length; i++) if (list[i].name === name) return i;
+    return -1;
+  }
+
+  function stepsTo(from, to) { return ((to - from) % TILES + TILES) % TILES; }
+
+  /* A legal pair of dice adding to `sum`, or null if no pair can. This is what
+     keeps the arranged ending honest: a token is only ever moved a distance
+     two real dice could have produced. */
+  function pairFor(sum) {
+    const opts = [];
+    for (let a = 1; a <= 6; a++) {
+      const b = sum - a;
+      if (b >= 1 && b <= 6) opts.push([a, b]);
+    }
+    return opts.length ? opts[(Math.random() * opts.length) | 0] : null;
+  }
+
+  /* Plan the game so it finishes where it is supposed to.
+
+     Tokens alternate, A on the even turns and B on the odd ones, and the last
+     move is B joining A. Three of the landings are named: the final pair on
+     CONFIG.ACT4.finishOn, and the one before them on beforeFinish. Rather than
+     throw whole sequences away until one happens to land there, the free rolls
+     are thrown and the named ones solved -- ask pairFor for the dice that
+     cover the distance, and if no pair can, throw the free rolls again.
+
+     Returns null if the named squares are placed somewhere the dice cannot
+     reach, which is a configuration problem rather than a run of bad luck. */
+  function planToFinish(count, finish, before) {
+    for (let attempt = 0; attempt < 600; attempt++) {
+      const rolls = new Array(count);
+      const landed = new Array(count);
+      const pos = [0, 0];
+      let ok = true;
+
+      for (let i = 0; i < count; i++) {
+        const who = i % 2;
+        const want = (i >= count - 2) ? finish : (i === count - 3 ? before : -1);
+        const pair = want < 0 ? [roll(), roll()] : pairFor(stepsTo(pos[who], want));
+        if (!pair) { ok = false; break; }
+        pos[who] = (pos[who] + pair[0] + pair[1]) % TILES;
+        rolls[i] = pair;
+        landed[i] = pos[who];
+      }
+      if (!ok || pos[0] !== pos[1]) continue;
+
+      /* Every landing has to be somewhere a photograph makes sense. The free
+         rolls will otherwise drop the first reveal on a corner, and "go to
+         jail" is a poor caption for a holiday. */
+      if (landed.some(function (i) { return !placeable(i); })) continue;
+
+      const unique = landed.filter(function (v, i) { return landed.indexOf(v) === i; });
+      if (unique.length < count - 1) continue;
+      return { rolls: rolls, landed: landed };
+    }
+    return null;
+  }
+
+  /* A square worth stopping on: a named property, not a corner and not a card
+     draw. */
+  function placeable(i) {
+    const t = CONFIG.ACT4.tiles[i];
+    return !!t && !t.corner && !!t.price;
+  }
+
   /* Plan the game.
 
      Tokens alternate. A moves on turns 0 and 2, B on 1 and 3. We want both on
      the same square after the last move, so sequences are drawn until one
-     works out -- every roll stays a legal pair of dice. */
+     works out -- every roll stays a legal pair of dice.
+
+     This is the fallback: it gets used when no finishing square is named, or
+     when the named ones turn out to be unreachable. */
   function planRolls(count) {
+    const A = CONFIG.ACT4;
+    const finish = A.finishOn ? tileIndex(A.finishOn) : -1;
+    const before = A.beforeFinish ? tileIndex(A.beforeFinish) : -1;
+    if (count >= 3 && finish >= 0 && before >= 0) {
+      const aimed = planToFinish(count, finish, before);
+      if (aimed) return aimed;
+    }
+    return planFree(count);
+  }
+
+  function planFree(count) {
     for (let attempt = 0; attempt < 4000; attempt++) {
       const rolls = [];
       for (let i = 0; i < count; i++) rolls.push([roll(), roll()]);
@@ -321,7 +403,27 @@ const Act4 = (function () {
     ctx.lineWidth = Math.max(1.2, size * 0.07);
     ctx.lineJoin = 'round';
     const u = size * 0.5;
-    if (kind === 'ship') {
+    if (kind === 'castle') {
+      /* Three towers on a wall, which is all a castle needs to be at 30px. */
+      const w = u * 0.86, base = u * 0.62, top = -u * 0.20;
+      ctx.beginPath();
+      ctx.rect(-w, top, w * 2, base - top);
+      ctx.fill();
+      const spires = [-w * 0.66, 0, w * 0.66];
+      const tall = [u * 0.55, u * 0.95, u * 0.55];
+      for (let i = 0; i < 3; i++) {
+        const half = u * 0.19;
+        ctx.beginPath();
+        ctx.rect(spires[i] - half, top - tall[i] * 0.55, half * 2, tall[i] * 0.55);
+        ctx.fill();
+        ctx.beginPath();                       // the cone on top
+        ctx.moveTo(spires[i] - half * 1.25, top - tall[i] * 0.55);
+        ctx.lineTo(spires[i], top - tall[i]);
+        ctx.lineTo(spires[i] + half * 1.25, top - tall[i] * 0.55);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else if (kind === 'ship') {
       ctx.beginPath();
       ctx.moveTo(0, -u * 0.85);
       ctx.lineTo(u * 0.24, -u * 0.05);
@@ -1068,7 +1170,7 @@ const Act4 = (function () {
 
   function reset() { started = false; turns = []; stars = []; bolts = []; }
 
-  return { draw: draw, build: build, reset: reset, bolts: function () { return bolts; },
+  return { draw: draw, build: build, reset: reset, bolts: function () { return bolts; }, turns: function () { return turns; },
            tileCount: function () { return TILES; },
            plan: function () { return turns; } };
 })();
