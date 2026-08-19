@@ -30,8 +30,8 @@ const CONFIG = {
     ambientFadeOut:[0.03, 0.13],   // idle traffic clears out
     launchWindow:  [0.10, 0.26],   // hero flights leave, staggered
     zoomOut:       [0.12, 0.78],   // camera pulls back to the world
-    allLanded:      0.80,          // last arrival, at the latest
-    titleFadeIn:   [0.86, 0.96]    // title card appears
+    allLanded:      0.90,          // last arrival, at the latest
+    titleFadeIn:   [0.88, 0.95]    // title card appears
   },
 
   /* How far the map dims under the title card. The airport codes stay
@@ -117,7 +117,7 @@ const CONFIG = {
   HERO_BOW: 0.9,            // slight per-flight arc offset so parallel routes separate
   LEG_DWELL: 0.05,          // pause on the ground between a journey's own legs
   TURNAROUND: 0.10,         // pause before a newly reached airport sends its own trips
-  STAGGER: 0.16,            // spacing between journeys leaving the same airport
+  STAGGER: 0.55,            // spacing between journeys leaving the same airport
   PLANE_SIZE: 17,
   HERO_PLANE_SIZE: 23
 };

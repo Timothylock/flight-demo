@@ -258,8 +258,12 @@ const Flights = (function () {
       const origin = f.stops[0];
       const arrived = reachedAt[origin] === undefined ? 0 : reachedAt[origin];
       const ready = arrived + (arrived > 0 ? turnaround : 0);
-      /* Space out journeys leaving the same field so they don't overlap. */
-      let t = Math.max(ready, (lastDeparture[origin] || 0) + stagger);
+      /* Space out journeys leaving the same field so they don't overlap --
+         but only against one that has actually left. Treating "no previous
+         departure" as zero pushed the very first flight of the whole sequence
+         back by a full stagger for no reason. */
+      const previous = lastDeparture[origin];
+      let t = previous === undefined ? ready : Math.max(ready, previous + stagger);
       lastDeparture[origin] = t;
       f.t0 = t;
 
