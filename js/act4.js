@@ -23,6 +23,8 @@ const Act4 = (function () {
   let dice = [{ v: 1 }, { v: 1 }];
   const images = new Map();
   let started = false;
+  let stars = [];
+  let bolts = [];
 
   function load(name) {
     const hit = images.get(name);
@@ -74,8 +76,59 @@ const Act4 = (function () {
     return { rolls: rolls, landed: landed };
   }
 
+  /* The sky is laid out once, in fractions of the frame, so it survives a
+     resize and doesn't crawl from frame to frame. */
+  function buildSpace() {
+    const S = CONFIG.ACT4.space;
+    stars = [];
+    for (let i = 0; i < S.stars; i++) {
+      stars.push({
+        x: Math.random(), y: Math.random(),
+        r: S.starMinR + Math.random() * (S.starMaxR - S.starMinR),
+        a: 0.25 + Math.random() * 0.75,
+        rate: 0.5 + Math.random() * 2.2,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    /* Bolts are scheduled up front rather than rolled each frame: the act has
+       a known length, and a fixed schedule means the same act plays the same
+       way twice and nothing depends on the frame rate. */
+    bolts = [];
+    const T = CONFIG.ACT4_SECONDS;
+    let t = 1.2;
+    while (t < T - 1) {
+      const n = S.laserBurst[0] +
+                ((Math.random() * (S.laserBurst[1] - S.laserBurst[0] + 1)) | 0);
+      for (let i = 0; i < n; i++) {
+        const from = edgePoint();
+        let to = edgePoint();
+        /* Anything too short reads as a spark rather than a shot. */
+        if (Math.hypot(to.x - from.x, to.y - from.y) < 0.6) to = edgePoint();
+        bolts.push({
+          t0: t + i * (0.06 + Math.random() * 0.13),
+          x0: from.x, y0: from.y, x1: to.x, y1: to.y,
+          speed: S.laserSpeed[0] + Math.random() * (S.laserSpeed[1] - S.laserSpeed[0]),
+          len: S.laserLength[0] + Math.random() * (S.laserLength[1] - S.laserLength[0]),
+          color: S.laserColors[(Math.random() * S.laserColors.length) | 0]
+        });
+      }
+      t += S.laserEvery * (0.6 + Math.random() * 1.1);
+    }
+  }
+
+  /* A point somewhere on the border of the frame, in fractions. */
+  function edgePoint() {
+    const e = (Math.random() * 4) | 0, f = Math.random();
+    if (e === 0) return { x: f, y: -0.04 };
+    if (e === 1) return { x: 1.04, y: f };
+    if (e === 2) return { x: f, y: 1.04 };
+    return { x: -0.04, y: f };
+  }
+
   function build() {
     const A = CONFIG.ACT4;
+    buildSpace();
     tiles = A.tiles;
     const reveals = A.reveals;
     const plan = planRolls(reveals.length);
@@ -781,6 +834,199 @@ const Act4 = (function () {
     ctx.restore();
   }
 
+  /* ------------------------------------------------------------------ space
+
+     Everything in here is drawn before the board and never after it, which is
+     the whole rule: it is a backdrop, and a backdrop that crosses in front of
+     a game board stops being one. */
+
+  function drawSky(ctx, t, opacity) {
+    const A = CONFIG.ACT4, S = A.space, C = A.colors;
+    const W = Camera.width, H = Camera.height;
+
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    ctx.fillStyle = C.space;
+    ctx.fillRect(0, 0, W, H);
+
+    /* A wash across one diagonal so the black has some depth to it. */
+    const g = ctx.createLinearGradient(0, H, W, 0);
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(0.45, C.nebula);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = opacity * S.nebula;
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = C.star;
+    for (let i = 0; i < stars.length; i++) {
+      const st = stars[i];
+      const tw = 1 - S.twinkle * 0.5 * (1 + Math.sin(t * st.rate + st.phase));
+      ctx.globalAlpha = opacity * st.a * Math.max(0.15, tw);
+      ctx.beginPath();
+      ctx.arc(st.x * W, st.y * H, st.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* The station. A sphere lit from the upper left, a trench round its middle,
+     and the dish set into the northern hemisphere -- drawn, not borrowed. */
+  function drawStation(ctx, t, opacity) {
+    const A = CONFIG.ACT4, S = A.space.deathStar, C = A.colors;
+    const W = Camera.width, H = Camera.height;
+    const cx = W * S.x, cy = H * S.y;
+    const r = Math.min(W, H) * S.r;
+
+    ctx.save();
+    /* It sits well behind the board and should never out-read it. */
+    ctx.globalAlpha = opacity * S.alpha;
+
+    /* Body, lit off the upper left so it reads as a ball and not a disc. */
+    const body = ctx.createRadialGradient(cx - r * 0.42, cy - r * 0.46, r * 0.04,
+                                          cx, cy, r * 1.18);
+    body.addColorStop(0, C.stationLit);
+    body.addColorStop(0.5, C.stationMid);
+    body.addColorStop(1, C.stationDark);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = body;
+    ctx.fill();
+
+    /* Everything below stays inside the sphere. */
+    ctx.save();
+    ctx.clip();
+
+    /* Panel lines: latitudes, then a few meridians, faint. */
+    ctx.strokeStyle = C.stationLine;
+    ctx.lineWidth = Math.max(0.6, r * 0.006);
+    for (let i = -4; i <= 4; i++) {
+      const y = cy + (i / 5) * r;
+      const half = Math.sqrt(Math.max(0, r * r - (y - cy) * (y - cy)));
+      ctx.beginPath();
+      ctx.moveTo(cx - half, y);
+      ctx.lineTo(cx + half, y);
+      ctx.stroke();
+    }
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, Math.abs(i / 2.5) * r, r, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    /* The equatorial trench, a shade darker than the panels. */
+    const tr = r * 0.075;
+    ctx.fillStyle = 'rgba(4,6,10,0.62)';
+    ctx.fillRect(cx - r, cy + r * 0.06 - tr / 2, r * 2, tr);
+    ctx.strokeStyle = 'rgba(150,168,195,0.22)';
+    ctx.lineWidth = Math.max(0.7, r * 0.008);
+    ctx.beginPath();
+    ctx.moveTo(cx - r, cy + r * 0.06 - tr / 2);
+    ctx.lineTo(cx + r, cy + r * 0.06 - tr / 2);
+    ctx.stroke();
+
+    /* The dish, set into the upper left where the light is. */
+    const dx = cx - r * 0.34, dy = cy - r * 0.36, dr = r * S.dish;
+    const dish = ctx.createRadialGradient(dx + dr * 0.25, dy + dr * 0.25, dr * 0.05,
+                                          dx, dy, dr);
+    dish.addColorStop(0, '#05070b');
+    dish.addColorStop(0.7, '#20252e');
+    dish.addColorStop(1, '#39404b');
+    ctx.beginPath();
+    ctx.ellipse(dx, dy, dr, dr * 0.93, -0.25, 0, Math.PI * 2);
+    ctx.fillStyle = dish;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(196,212,236,0.55)';
+    ctx.lineWidth = Math.max(0.9, r * 0.012);
+    ctx.stroke();
+
+    /* Focusing ring, and the eye of it. */
+    ctx.beginPath();
+    ctx.ellipse(dx, dy, dr * 0.58, dr * 0.54, -0.25, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(140,158,185,0.22)';
+    ctx.lineWidth = Math.max(0.6, r * 0.007);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(dx, dy, dr * 0.13, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(120,140,170,0.30)';
+    ctx.fill();
+
+    /* Shadow across the lower right, so it has a terminator. */
+    const term = ctx.createRadialGradient(cx - r * 0.45, cy - r * 0.5, r * 0.35,
+                                          cx + r * 0.5, cy + r * 0.55, r * 1.9);
+    term.addColorStop(0, 'rgba(0,0,0,0)');
+    term.addColorStop(0.62, 'rgba(0,0,0,0.26)');
+    term.addColorStop(1, 'rgba(0,0,0,0.88)');
+    ctx.fillStyle = term;
+    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+    ctx.restore();
+
+    /* A rim of light on the lit edge only. */
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - 0.5, Math.PI * 0.62, Math.PI * 1.68);
+    ctx.strokeStyle = C.stationRim;
+    ctx.lineWidth = Math.max(1, r * 0.012);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  /* Turbolaser bolts: a bright head with a tail, thrown across the frame. */
+  function drawBolts(ctx, t, opacity) {
+    const W = Camera.width, H = Camera.height;
+    ctx.save();
+    ctx.lineCap = 'round';
+
+    for (let i = 0; i < bolts.length; i++) {
+      const b = bolts[i];
+      const age = t - b.t0;
+      if (age < 0) continue;
+
+      const x0 = b.x0 * W, y0 = b.y0 * H, x1 = b.x1 * W, y1 = b.y1 * H;
+      const dx = x1 - x0, dy = y1 - y0;
+      const dist = Math.hypot(dx, dy) || 1;
+      const travelled = age * b.speed;
+      if (travelled - b.len > dist) continue;      // gone past the far edge
+
+      const ux = dx / dist, uy = dy / dist;
+      const head = Math.min(dist, travelled);
+      const tail = Math.max(0, travelled - b.len);
+      if (head - tail < 2) continue;
+
+      const hx = x0 + ux * head, hy = y0 + uy * head;
+      const tx = x0 + ux * tail, ty = y0 + uy * tail;
+
+      /* Fade in over the first instant and out as it runs off. */
+      const a = opacity * Math.min(1, age / 0.05) *
+                Math.min(1, (dist + b.len - travelled) / b.len);
+
+      const g = ctx.createLinearGradient(tx, ty, hx, hy);
+      g.addColorStop(0, 'rgba(255,255,255,0)');
+      g.addColorStop(1, b.color);
+
+      ctx.globalAlpha = a * 0.30;
+      ctx.strokeStyle = b.color;
+      ctx.lineWidth = 7;
+      ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(hx, hy); ctx.stroke();
+
+      ctx.globalAlpha = a;
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(hx, hy); ctx.stroke();
+
+      ctx.globalAlpha = a * 0.9;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(hx - ux * Math.min(18, head - tail), hy - uy * Math.min(18, head - tail));
+      ctx.lineTo(hx, hy);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   /* Breaking the surface out of Act Three. */
   function drawSurface(ctx, t, opacity) {
     const A = CONFIG.ACT4;
@@ -807,6 +1053,11 @@ const Act4 = (function () {
     ctx.fillRect(0, 0, Camera.width, Camera.height);
     ctx.restore();
 
+    /* Sky, station, bolts -- then the board over all of it, always. */
+    drawSky(ctx, t, opacity);
+    drawStation(ctx, t, opacity);
+    drawBolts(ctx, t, opacity);
+
     drawBoard(ctx, t, opacity);
     drawLanding(ctx, t, opacity);
     drawCentre(ctx, t, opacity);
@@ -815,9 +1066,9 @@ const Act4 = (function () {
     drawSurface(ctx, t, opacity);
   }
 
-  function reset() { started = false; turns = []; }
+  function reset() { started = false; turns = []; stars = []; bolts = []; }
 
-  return { draw: draw, build: build, reset: reset,
+  return { draw: draw, build: build, reset: reset, bolts: function () { return bolts; },
            tileCount: function () { return TILES; },
            plan: function () { return turns; } };
 })();

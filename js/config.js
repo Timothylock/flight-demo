@@ -643,8 +643,38 @@ CONFIG.ACT4 = {
   hopSeconds: 0.115,        // per square
   revealFade: 0.55,
 
+  /* The board is on a table somewhere out past the outer rim. Everything here
+     is behind the board and stays behind it -- a backdrop, not a scene. */
+  space: {
+    stars: 260,
+    starMinR: 0.5, starMaxR: 1.7,
+    twinkle: 0.35,          // how much a star's brightness wanders
+    nebula: 0.16,           // a faint wash so it isn't flat black
+
+    /* Off to the right, clear of the board on a 16:9 frame. Radius is a
+       fraction of the short edge. */
+    deathStar: { x: 0.885, y: 0.255, r: 0.175, dish: 0.28, alpha: 0.55 },
+
+    /* Turbolaser bolts. Green for the station, red for whatever is shooting
+       back. gap is the average wait between them; they come in short bursts
+       because one bolt on its own reads as a glitch. */
+    laserEvery: 2.1,
+    laserBurst: [2, 4],
+    laserSpeed: [1500, 2600],   // px/s
+    laserLength: [110, 240],
+    laserColors: ['#7CFF6B', '#7CFF6B', '#FF5A4A']
+  },
+
   colors: {
     backdrop:   '#050608',
+    space:      '#02030a',
+    nebula:     '#1b2f5e',
+    star:       '#dfe8ff',
+    stationLit: '#b4becd',
+    stationMid: '#68727f',
+    stationDark:'#12161f',
+    stationRim: 'rgba(190,205,225,0.55)',
+    stationLine:'rgba(6,8,12,0.34)',
     board:      '#0a0d11',
     boardCentre:'#12161d',
     frame:      'rgba(190,205,222,0.30)',

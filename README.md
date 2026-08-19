@@ -208,6 +208,16 @@ The corners are the one exception: turned onto their diagonals, names as long
 as `CARBONITE` ran out of their own square, so the artwork sits on the diagonal
 and the word underneath stays level.
 
+Act Four is played somewhere out past the outer rim: a starfield, a battle
+station off to one side, and turbolaser bolts crossing at intervals. All of it
+is drawn rather than borrowed -- the station is a lit sphere with a trench
+round its middle and a dish set into the northern hemisphere, nothing traced
+from anything. It is a backdrop and stays one: sky, station and bolts are all
+drawn before the board and never after it, so nothing ever crosses in front of
+the game. The bolts are scheduled once when the act is built rather than rolled
+each frame, which is why the same act plays the same way twice and why none of
+it depends on the frame rate.
+
 The finale is the only moment in the piece with nothing moving. Act Four fades
 under a black field, one photograph comes up with a single line beneath it,
 and it holds -- `CONFIG.FINALE.hold`, ten seconds by default -- before fading
