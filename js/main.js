@@ -48,12 +48,31 @@
 
     /* Airport codes claim their label slots before any aircraft do. */
     Labels.begin(dt);
-    Airports.draw(ctx, heroT, s.dim, s.hero * s.dim);
+    Airports.draw(ctx, heroT, s.dim * (1 - s.act2), s.hero * s.dim);
     Flights.drawAmbient(ctx, s.ambient * s.dim);
     Flights.drawHero(ctx, heroT, s.hero * s.dim);
 
+    if (s.act2 > 0.004) drawAct2(ctx, s);
+
     Narration.update(heroT, s.narration);
     titleEl.style.opacity = s.title;
+  }
+
+  /* Act Two draws over the same map: photographs pinned to it, the aircraft,
+     and the LED board on top of everything. */
+  function drawAct2(ctx, s) {
+    const t = Sequence.state.phase === 'ACT2' ? Sequence.state.t : Act2.duration();
+    Act2.drawArrivals(ctx, t, s.act2, 'marks');
+    Scrapbook.draw(ctx, t, s.act2);
+    Act2.drawArrivals(ctx, t, s.act2, 'names');
+
+    const st = Act2.state(t);
+    if (st && st.plane > 0.01 && st.heading !== null) {
+      const p = Camera.projectWrapped(st.lat, st.lon);
+      Flights.drawPlane(ctx, p.x, p.y, st.heading, CONFIG.ACT2_PLANE_SIZE,
+                        CONFIG.COLORS.hero, s.act2 * st.plane, 10);
+    }
+    LedBoard.draw(ctx, st ? st.flight : null, s.board);
   }
 
   /* ------------------------------------------------------------- controls */

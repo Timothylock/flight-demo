@@ -13,10 +13,13 @@ const CONFIG = {
      SEQUENCE_SECONDS is the whole show: launch -> zoom out -> everyone
      landed -> title card. Every other beat below is a fraction of it, so
      changing this one number retimes the entire piece.                     */
-  SEQUENCE_SECONDS: 85,
+  SEQUENCE_SECONDS: 75,
 
-  /* How long the finished world view holds before it resets itself. */
-  HOLD_SECONDS: 12,
+  /* How long the title card holds before Act Two begins. */
+  HOLD_SECONDS: 3,
+
+  /* Act Two: the plane revisiting four places, building a scrapbook. */
+  ACT2_SECONDS: 20,
 
   /* How long the drift back to Seattle takes. */
   RESET_SECONDS: 3.5,
@@ -27,8 +30,8 @@ const CONFIG = {
     ambientFadeOut:[0.03, 0.13],   // idle traffic clears out
     launchWindow:  [0.10, 0.26],   // hero flights leave, staggered
     zoomOut:       [0.12, 0.78],   // camera pulls back to the world
-    allLanded:      0.84,          // last arrival, at the latest
-    titleFadeIn:   [0.92, 0.99]    // title card appears
+    allLanded:      0.80,          // last arrival, at the latest
+    titleFadeIn:   [0.86, 0.96]    // title card appears
   },
 
   /* How far the map dims under the title card. The airport codes stay
@@ -164,11 +167,6 @@ const NARRATION = [
     at: 0.62, hold: 5.5, after: 'KEF',
     line1: 'One hundred and twenty-nine thousand miles',
     line2: 'five times around the world, together'
-  },
-  {
-    at: 0.74, hold: 5.5, after: 'CTS',
-    line1: 'The dotted line is January',
-    line2: 'and after that, wherever you want to go'
   }
 ];
 
@@ -223,3 +221,199 @@ const AMBIENT_ROUTES = [
 ];
 
 const AMBIENT_AIRLINES = ['AS', 'QX', 'DL', 'UA', 'AA', 'WN', 'B6', 'AC', 'F9', 'NK'];
+
+/* ==========================================================================
+   ACT TWO -- the scrapbook.
+
+   The plane flies four real flights, pausing over each place while photographs
+   fan out beside it and the LED board flips to that flight. The camera rides
+   with the aircraft the whole way: pulled back and quick across open water,
+   easing down to country scale on approach. No cuts.
+   ========================================================================== */
+
+/* The panel, top left. Sizes are in dots; the dot size itself comes off the
+   viewport so the board keeps its proportions on any screen. */
+CONFIG.BOARD = {
+  cols: 140,
+  rows: 80,
+  dotDivisor: 250,        // smaller number -> bigger board
+  margin: 34,
+  bezel: '#9aa0a6',
+  bezelWidth: 7,
+  field: '#050505',
+  lit: '#f2f2f2',
+  unlit: '#1a1a1a',
+  litRadius: 0.40,        // as a fraction of the dot pitch
+  unlitRadius: 0.26,
+  unlitAlpha: 0.85,
+  smallSize: 11,          // px height fed to the rasteriser
+  bigSize: 15,
+  layout: {
+    tailCol: 4,  tailRow: 7,
+    col: 44,     line1: 5,  line2: 18, line3: 31,
+    wideCol: 3,  line4: 47, line5: 63
+  }
+};
+
+/* Tail fins, one dot per character. Simplified liveries -- a swept fin in the
+   airline's colour with its mark picked out in white. */
+CONFIG.AIRLINE_TAILS = {
+  AC: {
+    colors: { R: '#d8232a', W: '#f4f4f4' },
+    rows: [
+      '.........RR',
+      '........RRR',
+      '.......RRRR',
+      '......RRRRR',
+      '.....RRRRRR',
+      '....RRRWRRR',
+      '....RRWWWRR',
+      '...RRRWWWRR',
+      '...RRWWWWWR',
+      '..RRRWWWWWR',
+      '..RRRRWWWRR',
+      '.RRRRRWRWRR',
+      '.RRRRRRRRRR',
+      'RRRRRRRRRRR',
+      'RRRRRRRRRRR'
+    ]
+  },
+  NH: {
+    colors: { B: '#1c3f94', W: '#f4f4f4' },
+    rows: [
+      '.........BB',
+      '........BBB',
+      '.......BBBB',
+      '......BBBBB',
+      '.....BBBBBB',
+      '....BBBBBBB',
+      '....BBWWWBB',
+      '...BBWWWWWB',
+      '...BBWWWWWB',
+      '..BBBWWWWBB',
+      '..BBBBWWBBB',
+      '.BBBBBBBBBB',
+      '.BBBBBBBBBB',
+      'BBBBBBBBBBB',
+      'BBBBBBBBBBB'
+    ]
+  },
+  BR: {
+    colors: { G: '#0f5c3f', W: '#f4f4f4', Y: '#e8b33a' },
+    rows: [
+      '.........GG',
+      '........GGG',
+      '.......GGGG',
+      '......GGGGG',
+      '.....GGGGGG',
+      '....GGGGGGG',
+      '....GGYYYGG',
+      '...GGYWWWYG',
+      '...GGYWWWYG',
+      '..GGGYWWYGG',
+      '..GGGGYYGGG',
+      '.GGGGGGGGGG',
+      '.GGGGGGGGGG',
+      'GGGGGGGGGGG',
+      'GGGGGGGGGGG'
+    ]
+  },
+  FI: {
+    colors: { B: '#1b3a6b', W: '#f4f4f4' },
+    rows: [
+      '.........BB',
+      '........BBB',
+      '.......BBBB',
+      '......BBBBB',
+      '.....BBWBBB',
+      '....BBWWWBB',
+      '....BWWWWWB',
+      '...BWWWWWWW',
+      '...BBWWWWWB',
+      '..BBBWWWWBB',
+      '..BBBBWWBBB',
+      '.BBBBBWBBBB',
+      '.BBBBBBBBBB',
+      'BBBBBBBBBBB',
+      'BBBBBBBBBBB'
+    ]
+  }
+};
+CONFIG.AIRLINE_TAILS.DEFAULT = {
+  colors: { W: '#cfcfcf' },
+  rows: CONFIG.AIRLINE_TAILS.AC.rows.map(function (r) { return r.replace(/R/g, 'W'); })
+};
+
+/* The four flights, as they were actually flown.
+
+   `hold` is the pause over the destination, `zoom` how close the camera comes.
+   `photos` are filenames under photos/ -- any that don't exist yet draw as
+   labelled empty frames, so this looks deliberate before you've added a single
+   image and fills in as you drop them in. */
+CONFIG.ACT2_FLIGHTS = [
+  {
+    airlineKey: 'AC', airline: 'Air Canada', flight: 'AC 3',
+    from: 'YVR', to: 'NRT', route: 'YVR-NRT', aircraft: '777-300ER',
+    fromName: 'Vancouver Intl', toName: 'Tokyo Narita',
+    place: 'JAPAN', zoom: 4.6, fan: -0.55,
+    photos: ['japan-1.jpg', 'japan-2.jpg', 'japan-3.jpg']
+  },
+  {
+    airlineKey: 'NH', airline: 'ANA', flight: 'NH 811',
+    from: 'NRT', to: 'HKG', route: 'NRT-HKG', aircraft: '787-8',
+    fromName: 'Tokyo Narita', toName: 'Hong Kong Intl',
+    place: 'HONG KONG', zoom: 5.4, fan: 2.5,
+    photos: ['hongkong-1.jpg', 'hongkong-2.jpg', 'hongkong-3.jpg']
+  },
+  {
+    airlineKey: 'BR', airline: 'EVA Air', flight: 'BR 872',
+    from: 'HKG', to: 'TPE', route: 'HKG-TPE', aircraft: '787-9',
+    fromName: 'Hong Kong Intl', toName: 'Taipei Taoyuan',
+    place: 'TAIWAN', zoom: 5.6, fan: 1.15,
+    photos: ['taiwan-1.jpg', 'taiwan-2.jpg']
+  },
+  {
+    airlineKey: 'FI', airline: 'Icelandair', flight: 'FI 694',
+    from: 'YVR', to: 'KEF', route: 'YVR-KEF', aircraft: '737 MAX 8',
+    fromName: 'Vancouver Intl', toName: 'Keflavik Intl',
+    place: 'ICELAND', zoom: 4.8, fan: 0.1,
+    photos: ['iceland-1.jpg', 'iceland-2.jpg', 'iceland-3.jpg']
+  }
+];
+
+/* Scrapbook frames. */
+CONFIG.SCRAPBOOK = {
+  dir: 'photos/',
+  frameW: 210,            // px at 1920 wide, scaled with the viewport
+  frameH: 158,            // 4:3 landscape
+  border: 9,
+  gap: 22,
+  fullScaleZoom: 5.0,     // frames are full size at about this zoom
+  scaleWithZoom: 0.42,    // how hard they shrink as the camera pulls back
+  minScale: 0.52,
+  tilt: 7,                // degrees of random-ish rotation
+  popSeconds: 0.55,
+  radius: 200             // how far the cluster sits from the airport
+};
+
+/* Beats within Act Two, in seconds. Everything left over after these is
+   flying time, shared out by distance. */
+CONFIG.ACT2_PLANE_SIZE = 30;
+CONFIG.ACT2_HOLD = 1.9;      // pause over each destination
+CONFIG.ACT2_MIN_FLY = 1.1;   // shortest a leg may be, however near
+CONFIG.ACT2_SWEEP = 1.6;     // camera crossing to a leg that doesn't chain on
+CONFIG.ACT2_FINAL = 2.6;     // pull back at the end to hold the whole scrapbook
+CONFIG.ACT2_FINAL_PADDING = 0.55;  // extra room so the frames aren't cropped     // pull back at the end to hold the whole scrapbook
+
+/* How the camera rides along. Zoom is driven by how near the aircraft is to
+   either end of its leg: close in at both, pulled back across the middle. */
+CONFIG.ACT2_CAMERA = {
+  transitZoom: 2.9,
+  nearKm: 900,            // fully zoomed in inside this
+  farKm: 3600,            // fully pulled back beyond this
+  tau: 0.45,              // camera smoothing, seconds
+  enterTau: 1.5,          // slower while easing out of Act One
+  settleSeconds: 2.5,
+  offsetX: 0.12,          // nudge the map right, clear of the board
+  offsetY: 0.06
+};

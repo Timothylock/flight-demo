@@ -108,9 +108,16 @@ as a stutter the entire way out.
 | `js/worldlayer.js` | coastlines, borders, lakes |
 | `js/radar.js` | rings and the sweep |
 | `js/flights.js` | aircraft, routes, the spreading schedule |
+| `js/act2.js` | the scrapbook act: flights, camera ramp, arrivals |
+| `js/ledboard.js` | the dot-matrix flight board |
+| `js/scrapbook.js` | photograph frames pinned to the map |
 | `js/airports.js` | markers and their reveal |
 | `js/labels.js` | keeps labels from stacking |
 | `js/sequence.js` | the state machine driving all of it |
+
+The board's text isn't a pixel typeface. It's rendered tiny on an offscreen
+canvas, read back a pixel at a time, and each lit pixel redrawn as a round LED --
+so the dots *are* the glyphs. Sizes in `CONFIG.BOARD` are in dots, not pixels.
 
 Two details worth knowing if you change things:
 

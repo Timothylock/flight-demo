@@ -12,6 +12,8 @@
 
 const Sequence = (function () {
 
+  let act2Exit = null;      // camera snapshot taken as the final pull-back starts
+
   const state = {
     phase: 'IDLE',
     t: 0,                 // seconds inside the current phase
@@ -21,7 +23,9 @@ const Sequence = (function () {
     title: 0,
     dim: 1,               // everything under the title card fades back a little
     radar: 1,             // the sweep: cold open only
-    narration: 0          // the lines carried through the flying
+    narration: 0,         // the lines carried through the flying
+    act2: 0,              // the scrapbook act
+    board: 0              // the LED flight board
   };
 
   function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
@@ -57,6 +61,17 @@ const Sequence = (function () {
     const x = Geo.mercX(from.lon) + (Geo.mercX(to.lon) - Geo.mercX(from.lon)) * e;
     const y = Geo.mercY(from.lat) + (Geo.mercY(to.lat) - Geo.mercY(from.lat)) * e;
     Camera.set(Geo.invMercY(y), Geo.invMercX(x), from.zoom + (to.zoom - from.zoom) * e);
+  }
+
+  /* Ease the camera towards a view. Snapping to a freshly computed target
+     every frame reads as a jitter; this glides. */
+  function easeCameraTo(target, dt, tau) {
+    const k = 1 - Math.exp(-dt / tau);
+    const cx = Geo.mercX(Camera.lon) +
+               (Geo.mercX(Geo.unwrap(target.lon, Camera.lon)) - Geo.mercX(Camera.lon)) * k;
+    const cy = Geo.mercY(Camera.lat) + (Geo.mercY(target.lat) - Geo.mercY(Camera.lat)) * k;
+    const zoom = Camera.zoom + (target.zoom - Camera.zoom) * k;
+    Camera.set(Geo.invMercY(cy), Geo.invMercX(cx), zoom);
   }
 
   /* Exponential smoothing towards the target view. Fitting exactly every
@@ -115,7 +130,11 @@ const Sequence = (function () {
     state.dim = 1;
     state.radar = 1;
     state.narration = 0;
+    state.act2 = 0;
+    state.board = 0;
+    act2Exit = null;
     Narration.clear();
+    Scrapbook.reset();
     Flights.clearHero();
     Flights.buildAmbient();
     Airports.reset();
@@ -199,6 +218,62 @@ const Sequence = (function () {
       state.narration = 0;
       lerpCamera(worldView(), worldView(), 1);
       if (state.t >= CONFIG.HOLD_SECONDS) {
+        state.phase = 'ACT2';
+        state.t = 0;
+        act2Exit = null;
+        Act2.build();
+      }
+      return;
+    }
+
+    if (state.phase === 'ACT2') {
+      const t = state.t;
+      const T = Act2.duration();
+
+      /* The title and the world view give way to the scrapbook. */
+      state.title = 1 - smooth(ramp(t, 0.0, 1.1));
+      state.act2 = smooth(ramp(t, 0.5, 1.8));
+      state.board = smooth(ramp(t, 0.9, 2.0));
+      state.hero = 1 - smooth(ramp(t, 0.0, 1.4));      // Act One's arcs clear out
+      state.ambient = 0;
+      state.map = 1;
+      state.dim = 1;
+      state.narration = 0;
+
+      Act2.update(t);
+
+      /* Ride with the aircraft, then pull back to hold the whole scrapbook. */
+      const st = Act2.state(t);
+      const finish = ramp(t, T - CONFIG.ACT2_FINAL, T);
+
+      if (finish > 0) {
+        /* Interpolate straight from a snapshot taken as the pull-back began,
+           with no extra smoothing on top. Easing towards a target that is
+           itself being eased lags twice over, and the camera was still short
+           of its mark when the act ended -- Hong Kong and Taiwan never made it
+           back into frame. */
+        if (!act2Exit) {
+          act2Exit = { lat: Camera.lat, lon: Camera.lon, zoom: Camera.zoom };
+        }
+        const end = Act2.finalView();
+        const e = easeInOutCubic(finish);
+        const lon = Geo.unwrap(end.lon, act2Exit.lon);
+        Camera.set(
+          Geo.invMercY(Geo.mercY(act2Exit.lat) +
+                       (Geo.mercY(end.lat) - Geo.mercY(act2Exit.lat)) * e),
+          act2Exit.lon + (lon - act2Exit.lon) * e,
+          act2Exit.zoom + (end.zoom - act2Exit.zoom) * e
+        );
+      } else if (st) {
+        /* Slack off the smoothing at the top of the act so the camera glides
+           out of Act One's world view instead of snapping onto Vancouver. */
+        const settle = Math.min(1, t / CONFIG.ACT2_CAMERA.settleSeconds);
+        const tau = CONFIG.ACT2_CAMERA.enterTau +
+                    (CONFIG.ACT2_CAMERA.tau - CONFIG.ACT2_CAMERA.enterTau) * smooth(settle);
+        easeCameraTo({ lat: st.lat, lon: st.lon, zoom: st.zoom }, dt, tau);
+      }
+
+      if (t >= T) {
         state.phase = 'RESET';
         state.t = 0;
       }

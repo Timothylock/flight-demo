@@ -433,6 +433,7 @@ const Flights = (function () {
   }
 
   return {
+    drawPlane: drawPlane,
     reachedAt: function () { return reached; },
     positionAt: positionAt,
     heroStops: heroStops,
