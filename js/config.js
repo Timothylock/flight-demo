@@ -629,6 +629,29 @@ CONFIG.ACT4 = {
 };
 
 /* ==========================================================================
+   THE SCORE.
+
+   One track under the whole piece, started by the press that starts the
+   sequence -- browsers only let audio begin inside a user gesture, and space
+   (or a tap) is one.
+
+   stopAt is wall-clock seconds from that press, not sequence time, so it holds
+   whatever the frame rate does. The finale ends at 2:24 and the drift back to
+   the radar finishes at 2:27.5, so 145 puts the last of the music just inside
+   the return to black.
+
+   The file runs 4:15 -- longer than the piece -- so what you hear at the end is
+   this fade rather than the track's own ending. Raise stopAt to hear more of it.
+   ========================================================================== */
+CONFIG.MUSIC = {
+  file: 'audio/score.mp3',
+  volume: 0.8,          // 0-1; the projector's own volume is the coarse control
+  fadeIn: 1.5,          // up from silence, so the press isn't a click
+  stopAt: 145,          // 2:25 exactly, measured from the press
+  fadeOut: 4.5          // down to nothing, landing on stopAt
+};
+
+/* ==========================================================================
    THE FINALE -- one photograph, one line, held.
 
    The only still moment in the piece. Everything before it moves; this does

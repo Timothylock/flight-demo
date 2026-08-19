@@ -168,6 +168,7 @@ const Sequence = (function () {
     Act3.reset();
     Act4.reset();
     Finale.reset();
+    Music.stop();
     Narration.clear();
     Scrapbook.reset();
     Flights.clearHero();

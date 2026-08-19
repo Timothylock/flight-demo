@@ -14,18 +14,23 @@ open to wait for you to press again.
 Open `index.html`. That's it — double-click the file, no server, no network.
 
 Everything it needs is in the repo: map tiles as PNGs, world boundaries as a
-`.js` file, no CDN and no third-party script. It's built for `file://`
-deliberately, which is why the geometry ships as a script that assigns a global
-instead of as JSON — `fetch()` is blocked there, `<script src>` is not.
+`.js` file, the score as an MP3, no CDN and no third-party script. It's built
+for `file://` deliberately, which is why the geometry ships as a script that
+assigns a global instead of as JSON — `fetch()` is blocked there, `<script src>`
+is not.
+
+Sound needs the keyboard, not just the projector: the score can only start
+inside a user gesture, so it begins on the space press. If you start the piece
+some other way, it runs silent.
 
 For a projector: press `F` for fullscreen. The cursor hides itself after two
 seconds.
 
 | key | |
 |---|---|
-| `space` / tap | run the sequence (during the held frame, skip to the reset) |
+| `space` / tap | run the sequence, and start the music (during the held frame, skip to the reset) |
 | `F` | fullscreen |
-| `R` | force back to the cold open |
+| `R` | force back to the cold open, and cut the music |
 
 Tapping anywhere does what space does, so it works on a phone.
 
@@ -97,6 +102,15 @@ last line collide with the title card -- but if the lines feel rushed, cut one
 from `NARRATION` rather than lengthening the act, because everything after
 0:43 is spoken for.
 
+**The music.** `CONFIG.MUSIC` is one track, `audio/score.mp3`, started by the
+same press that starts the sequence -- which is what makes it play at all,
+since a browser will only begin audio inside a user gesture. `stopAt` is
+wall-clock seconds from that press, so 145 means 2:25 on the nose whatever the
+frame rate does, and `fadeOut` lands the last of it there rather than cutting.
+`volume` is 0-1 on top of whatever the projector is set to. Swap the file and
+the rest still holds; the one in the repo runs 4:15, longer than the piece, so
+what you hear at the end is the fade rather than the track's own ending.
+
 **The last frame.** `CONFIG.FINALE` is the closing beat: one filename, one
 line, and `fadeIn` / `hold` / `fadeOut` in seconds. Drop `photos/finale.jpg` in
 and rewrite the line -- the one in the repo is a placeholder like the rest of
@@ -143,6 +157,7 @@ as a stutter the entire way out.
 | `js/act3.js` | the water: perspective, bubbles, Snell's window |
 | `js/act4.js` | the board: tiles, dice, tokens |
 | `js/finale.js` | the last photograph and the hold |
+| `js/music.js` | the score, and where it stops |
 | `js/ledboard.js` | the dot-matrix flight board |
 | `js/scrapbook.js` | photograph frames pinned to the map |
 | `js/airports.js` | markers and their reveal |

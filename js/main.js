@@ -33,6 +33,7 @@
     last = now;
 
     Radar.update(dt);
+    Music.update();
     Sequence.update(dt);
 
     const s = Sequence.state;
@@ -90,7 +91,11 @@
   /* ------------------------------------------------------------- controls */
 
   function trigger() {
-    if (!Sequence.start()) Sequence.skip();
+    /* Sequence.start() is true only when a run actually begins, which is also
+       the only moment the score should. Calling it from inside the key/tap
+       handler is what lets the browser play it at all. */
+    if (Sequence.start()) Music.start();
+    else Sequence.skip();
   }
 
   window.addEventListener('keydown', function (e) {
