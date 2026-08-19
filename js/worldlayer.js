@@ -77,11 +77,16 @@ const WorldLayer = (function () {
   function draw(ctx, opacity) {
     if (opacity <= 0.004) return;
     const data = prepare();
-    /* The detailed set is ~1400 polygons against ~120. Below this zoom almost
-       all of them are on screen, culling saves nothing, and the extra vertices
-       land well under a pixel apiece -- so the coarse set carries the wide
-       views and the tiles supply the detail that actually reads. */
-    const fine = Camera.zoom >= 6.2;
+    /* The detailed set is ~1400 polygons and 60,000 points against ~120 and
+       5,000. It's used for everything except the very widest view, where the
+       extra vertices genuinely land under a pixel apiece and only make the
+       coastline noisy.
+
+       This threshold used to sit far higher, chosen to save frame time, which
+       meant every country close-up in Act Two -- Japan, Hong Kong, Taiwan,
+       Iceland, all between zoom 4.6 and 5.6 -- was drawn from the coarse
+       outline. Those are the shots the act is built around. */
+    const fine = Camera.zoom >= CONFIG.FINE_DETAIL_ZOOM;
     const lod = fine ? data.fine : data.coarse;
     const offsets = copies();
     const fillAlpha = opacity;

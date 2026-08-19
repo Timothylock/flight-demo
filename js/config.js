@@ -49,6 +49,10 @@ const CONFIG = {
      -- roughly "the middle of the map you want" -- and WORLD.lat is a fallback
      if there are no routes at all. */
   WORLD: { lat: 32.0, lon: -100.0 },
+  /* Below this zoom the coastline switches to the coarse outline. Keep it low:
+     the detailed set is what makes a country close-up look like that country. */
+  FINE_DETAIL_ZOOM: 2.6,
+
   CAMERA_FOLLOW_TAU: 2.6,       // seconds for the camera to settle on a new fit
   WORLD_PADDING: 0.06,          // breathing room around the outermost airports
   WORLD_BOTTOM_RESERVE: 0.26,   // strip along the bottom kept clear for the title

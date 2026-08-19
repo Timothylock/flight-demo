@@ -55,7 +55,7 @@ const Radar = (function () {
        the leading edge -- a conic gradient would do it in one call but isn't
        reliable everywhere, and this is cheap. */
     const tail = CONFIG.RADAR.sweepTailDegrees * Math.PI / 180;
-    const steps = 30;
+    const steps = 48;
     /* Fade the wedge out towards its far edge as well as behind the leading
        edge -- a slice of even brightness all the way to the rim looks like a
        shape sitting on the map instead of a beam passing over it. */
