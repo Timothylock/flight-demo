@@ -148,7 +148,7 @@ const NARRATION = [
   {
     at: 0.24, hold: 5.5, after: 'YYZ',
     line1: 'Before it was Seattle, it was Toronto',
-    line2: 'fourteen years of leaving, and coming back'
+    line2: 'five years of leaving, and coming back'
   },
   {
     at: 0.36, hold: 5.5, after: 'YEG',
@@ -162,8 +162,8 @@ const NARRATION = [
   },
   {
     at: 0.62, hold: 5.5, after: 'KEF',
-    line1: 'One hundred and eighty-eight thousand miles',
-    line2: 'seven and a half times around the world, together'
+    line1: 'One hundred and forty-six thousand miles',
+    line2: 'nearly six times around the world, together'
   },
   {
     at: 0.74, hold: 5.5, after: 'CTS',

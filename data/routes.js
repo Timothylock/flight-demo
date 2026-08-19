@@ -94,11 +94,6 @@ window.ROUTE_DATA = {
    "lat": 25.7959,
    "lon": -80.287
   },
-  "BOS": {
-   "name": "Boston",
-   "lat": 42.3656,
-   "lon": -71.0096
-  },
   "YYC": {
    "name": "Calgary",
    "lat": 51.1139,
@@ -113,11 +108,6 @@ window.ROUTE_DATA = {
    "name": "Sapporo",
    "lat": 42.7752,
    "lon": 141.6923
-  },
-  "YUL": {
-   "name": "Montreal",
-   "lat": 45.4706,
-   "lon": -73.7408
   },
   "LAX": {
    "name": "Los Angeles",
@@ -275,32 +265,18 @@ window.ROUTE_DATA = {
    "date": "2025-01-02"
   },
   {
-   "callsign": "CPA 825",
-   "legs": [
-    {
-     "from": "YYZ",
-     "to": "HKG",
-     "callsign": "CPA 825",
-     "dup": false
-    },
-    {
-     "from": "HKG",
-     "to": "NRT",
-     "callsign": "CPA 520",
-     "dup": false
-    }
-   ],
-   "booked": false,
-   "count": 1,
-   "date": "2016-07-22"
-  },
-  {
    "callsign": "ACA 3",
    "legs": [
     {
      "from": "YVR",
      "to": "NRT",
      "callsign": "ACA 3",
+     "dup": false
+    },
+    {
+     "from": "NRT",
+     "to": "HKG",
+     "callsign": "ANA 811",
      "dup": false
     }
    ],
@@ -323,24 +299,18 @@ window.ROUTE_DATA = {
    "date": "2026-04-04"
   },
   {
-   "callsign": "NKS 245",
+   "callsign": "ACA 1093",
    "legs": [
     {
-     "from": "LAS",
+     "from": "YYZ",
      "to": "SAN",
-     "callsign": "NKS 245",
-     "dup": false
-    },
-    {
-     "from": "SAN",
-     "to": "YYZ",
-     "callsign": "ACA 1887",
+     "callsign": "ACA 1093",
      "dup": false
     }
    ],
    "booked": false,
    "count": 1,
-   "date": "2017-05-14"
+   "date": "2022-11-15"
   },
   {
    "callsign": "WJA 707",
@@ -357,18 +327,18 @@ window.ROUTE_DATA = {
    "date": "2021-09-04"
   },
   {
-   "callsign": "WJA 443",
+   "callsign": "WJA 437",
    "legs": [
     {
      "from": "YYZ",
      "to": "YEG",
-     "callsign": "WJA 443",
+     "callsign": "WJA 437",
      "dup": false
     }
    ],
    "booked": false,
-   "count": 2,
-   "date": "2013-07-05"
+   "count": 1,
+   "date": "2022-06-10"
   },
   {
    "callsign": "ACA 1648",
@@ -411,20 +381,6 @@ window.ROUTE_DATA = {
    "booked": false,
    "count": 1,
    "date": "2025-05-23"
-  },
-  {
-   "callsign": "WJA 3600",
-   "legs": [
-    {
-     "from": "YYZ",
-     "to": "BOS",
-     "callsign": "WJA 3600",
-     "dup": false
-    }
-   ],
-   "booked": false,
-   "count": 1,
-   "date": "2016-12-27"
   },
   {
    "callsign": "ACA 218",
@@ -501,20 +457,6 @@ window.ROUTE_DATA = {
    "booked": true,
    "count": 1,
    "date": "2027-01-21"
-  },
-  {
-   "callsign": "ACA 425",
-   "legs": [
-    {
-     "from": "YYZ",
-     "to": "YUL",
-     "callsign": "ACA 425",
-     "dup": false
-    }
-   ],
-   "booked": false,
-   "count": 1,
-   "date": "2018-09-02"
   },
   {
    "callsign": "ACA 788",

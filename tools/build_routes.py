@@ -30,6 +30,11 @@ OUT = os.path.join(ROOT, "data", "routes.js")
 
 HOME = ["SEA", "PAE"]
 
+# Nothing before this date. The map is meant to be the trips taken together,
+# and the export reaches back years further than that. Set it to the real
+# anniversary rather than a round five years if you want the edge exact.
+EARLIEST = "2021-08-19"
+
 # Airports to leave out entirely. Both ends of any leg touching one are dropped.
 EXCLUDE = {"BCN", "LHR"}
 
@@ -74,6 +79,8 @@ def read_legs(path):
     with open(path) as fh:
         for row in csv.DictReader(fh):
             if not row.get("Date"):
+                continue
+            if row["Date"] < EARLIEST:
                 continue
             a = MERGE.get(row["From"], row["From"])
             b = MERGE.get(row["To"], row["To"])
