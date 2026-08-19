@@ -76,22 +76,26 @@ The five acts run back to back, and the whole piece is two minutes twenty-five:
 
 | | seconds | starts |
 |---|---|---|
-| Act One, the radar and the spreading | `SEQUENCE_SECONDS` 51 | 0:00 |
-| the title card, held | `HOLD_SECONDS` 3 | 0:51 |
-| Act Two, the scrapbook | `ACT2_SECONDS` 31 | 0:54 |
-| Act Three, the water | `ACT3_SECONDS` 18 | 1:25 |
-| Act Four, the board | `ACT4_SECONDS` 27 | 1:43 |
-| the finale | `FINALE` 2.5 + 10 + 2.5 | 2:10 |
-| the drift back to the radar | `RESET_SECONDS` 3.5 | 2:25 |
+| Act One, the radar and the spreading | `SEQUENCE_SECONDS` 41 | 0:00 |
+| the title card, held | `HOLD_SECONDS` 2 | 0:41 |
+| Act Two, the scrapbook | `ACT2_SECONDS` 34 | 0:43 |
+| Act Three, the water | `ACT3_SECONDS` 20 | 1:17 |
+| Act Four, the board | `ACT4_SECONDS` 30 | 1:37 |
+| the finale | `FINALE` 3.5 + 10 + 3.5 | 2:07 |
+| the drift back to the radar | `RESET_SECONDS` 3.5 | 2:24 |
 
-Move any one of them and everything after it shifts by the same amount. Two
-floors are worth knowing before you cut: Act Two needs about 29 seconds to keep
-a full five-second hold over each of its four places (below that
-`CONFIG.ACT2_HOLD` starts getting squeezed automatically), and Act One needs
-about 50 to carry six narration beats without the last one running into the
-title card -- `js/narration.js` squeezes the holds rather than let them
-collide, so a too-short act shows up as narration that flicks past rather than
-as anything breaking.
+Move any one of them and everything after it shifts by the same amount.
+
+Two floors are worth knowing before you cut further. Act Two needs about 29
+seconds to keep a full five-second hold over each of its four places -- below
+that `CONFIG.ACT2_HOLD` starts getting squeezed automatically. And Act One
+wants about 65 seconds to carry six narration beats at the pace they were
+written for; it has 41, so `js/narration.js` squeezes the holds to about three
+seconds a line. That is the one place the piece is running faster than it
+would like. It doesn't break -- the scheduler squeezes rather than lets the
+last line collide with the title card -- but if the lines feel rushed, cut one
+from `NARRATION` rather than lengthening the act, because everything after
+0:43 is spoken for.
 
 **The last frame.** `CONFIG.FINALE` is the closing beat: one filename, one
 line, and `fadeIn` / `hold` / `fadeOut` in seconds. Drop `photos/finale.jpg` in

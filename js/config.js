@@ -17,22 +17,27 @@ const CONFIG = {
      The five acts run back to back, and these are the numbers that decide
      where each one lands on the clock:
 
-        Act One      51      0:00
-        title hold    3      0:51
-        Act Two      31      0:54
-        Act Three    18      1:25
-        Act Four     27      1:43
-        finale       15      2:10  -> ends 2:25
-        reset       3.5      2:25  -> radar back at 2:28.5
+        Act One      41      0:00
+        title hold    2      0:41
+        Act Two      34      0:43
+        Act Three    20      1:17
+        Act Four     30      1:37
+        finale       17      2:07  -> ends 2:24
+        reset       3.5      2:24  -> radar back at 2:27.5
+
+     Act One is the only act carrying its full weight in less time than it
+     wants: six narration beats in forty-one seconds squeeze to about three
+     seconds a line. If that reads too fast, the fix is fewer lines in
+     NARRATION rather than a longer act -- the clock after it is spoken for.
 
      Move any of them and everything after it shifts by the same amount.   */
-  SEQUENCE_SECONDS: 51,
+  SEQUENCE_SECONDS: 41,
 
   /* How long the title card holds before Act Two begins. */
-  HOLD_SECONDS: 3,
+  HOLD_SECONDS: 2,
 
   /* Act Two: the plane revisiting four places, building a scrapbook. */
-  ACT2_SECONDS: 31,
+  ACT2_SECONDS: 34,
 
   /* How long the drift back to Seattle takes. */
   RESET_SECONDS: 3.5,
@@ -448,7 +453,7 @@ CONFIG.ACT2_CAMERA = {
    inwards towards the surface.
    ========================================================================== */
 
-CONFIG.ACT3_SECONDS = 18;
+CONFIG.ACT3_SECONDS = 20;
 CONFIG.ACT3_FADE_IN = 2.4;   // how long the map takes to dissolve into water
 
 CONFIG.ACT3 = {
@@ -510,13 +515,13 @@ CONFIG.ACT3 = {
      narration -- rewrite them. */
   textFade: 1.1,
   lines: [
-    { at: 1.8,  hold: 3.4, y: 0.30,
+    { at: 2.0,  hold: 3.4, y: 0.30,
       line1: 'AND THEN THERE IS THE WATER',
       line2: 'the first thing we look for, everywhere we go' },
-    { at: 7.6,  hold: 3.4, y: 0.72,
+    { at: 8.5,  hold: 3.4, y: 0.72,
       line1: 'NO DEPARTURE BOARDS DOWN HERE',
       line2: 'nowhere to be, nothing to catch' },
-    { at: 13.2, hold: 3.2, y: 0.30,
+    { at: 15.0, hold: 3.2, y: 0.30,
       line1: 'STAY IN A WHILE',
       line2: 'we have got time' }
   ]
@@ -539,7 +544,7 @@ CONFIG.ACT3 = {
    and names. Colour groups alternate between the two worlds all the way round.
    ========================================================================== */
 
-CONFIG.ACT4_SECONDS = 27;
+CONFIG.ACT4_SECONDS = 30;
 
 CONFIG.ACT4 = {
   dir: 'photos/',
@@ -548,7 +553,7 @@ CONFIG.ACT4 = {
   assembleSeconds: 3.9,     // board laying itself out
   surfaceSeconds: 1.3,      // the flash of breaking the surface
   finaleSeconds: 2.6,       // both tokens together at the end
-  rollSeconds: 1.25,        // the throw: flying in, tumbling, settling
+  rollSeconds: 1.45,        // the throw: flying in, tumbling, settling
   hopSeconds: 0.115,        // per square
   revealFade: 0.55,
 
@@ -634,9 +639,9 @@ CONFIG.FINALE = {
   photo: 'finale.jpg',
   line: 'happy anniversary, my favourite person to go anywhere with',
 
-  fadeIn: 2.5,          // slow arrival out of the board
+  fadeIn: 3.5,          // slow arrival out of the board
   hold: 10,             // held, still
-  fadeOut: 2.5,         // down into the black the radar begins from
+  fadeOut: 3.5,         // down into the black the radar begins from
 
   size: 0.52,           // photograph height as a fraction of the screen
   aspect: 1.4,          // 7:5 landscape
