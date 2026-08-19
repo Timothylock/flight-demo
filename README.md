@@ -110,6 +110,7 @@ as a stutter the entire way out.
 | `js/flights.js` | aircraft, routes, the spreading schedule |
 | `js/act2.js` | the scrapbook act: flights, camera ramp, arrivals |
 | `js/act3.js` | the water: perspective, bubbles, Snell's window |
+| `js/act4.js` | the board: tiles, dice, tokens |
 | `js/ledboard.js` | the dot-matrix flight board |
 | `js/scrapbook.js` | photograph frames pinned to the map |
 | `js/airports.js` | markers and their reveal |
@@ -129,6 +130,19 @@ sinks faster than the bubbles rise, so they stream outwards past you, and as the
 descent decays they turn round and drift inwards towards the surface. Overhead
 is Snell's window, the bright disc the whole sky compresses into when seen from
 below water.
+
+In Act Four the dice genuinely drive the act: two of them settle on a number
+and a token counts out exactly that many squares, and whatever it lands on is
+what lights up. The only arranged part is the finish. The whole set of rolls is
+chosen before the act starts, by trying sequences until one ends with both
+tokens on the same square -- every roll stays an ordinary pair of dice and no
+token ever moves further than it threw. Because the second player lands on the
+first player's square, the last two reveals share a tile, which is the point.
+
+Board text turns on the left and right sides but stays upright on the top,
+bottom and corners. A real board faces each side's text at its own player,
+which leaves half of it upside down -- fine on a table with four people round
+it, wrong on a ceiling where there is one person and one orientation.
 
 Two details worth knowing if you change things:
 

@@ -504,3 +504,95 @@ CONFIG.ACT3 = {
       line2: 'we have got time' }
   ]
 };
+
+/* ==========================================================================
+   ACT FOUR -- the board.
+
+   Twenty-eight tiles in a ring, dark with the colour bands lit from within.
+   The middle of a board is empty by design, so that's where the photographs
+   and the lines go.
+
+   The dice drive it: two of them settle on a number and a token counts out
+   exactly that many squares. Players alternate. The only arranged part is the
+   finish -- the whole set of rolls is chosen up front so the last one puts
+   both tokens on the same square, but every roll is an ordinary pair of dice
+   and no token ever moves further than it threw.
+
+   Everything is drawn rather than borrowed: no logos, no artwork, just shapes
+   and names. Colour groups alternate between the two worlds all the way round.
+   ========================================================================== */
+
+CONFIG.ACT4_SECONDS = 30;
+
+CONFIG.ACT4 = {
+  dir: 'photos/',
+  boardScale: 0.93,
+
+  assembleSeconds: 3.4,     // board laying itself out
+  surfaceSeconds: 1.3,      // the flash of breaking the surface
+  finaleSeconds: 2.6,       // both tokens together at the end
+  rollSeconds: 1.15,        // dice tumbling before they settle
+  hopSeconds: 0.115,        // per square
+  revealFade: 0.55,
+
+  colors: {
+    backdrop:   '#050608',
+    board:      '#0c0f13',
+    tile:       '#12161c',
+    edge:       'rgba(255,255,255,0.13)',
+    tileText:   '#c8d0da',
+    cornerText: '#eef2f6',
+    centreText: '#d5dde6',
+    die:        '#e9eef4',
+    pip:        '#12161c',
+    tokenA:     '#ff5a5f',   // the sphere
+    tokenB:     '#5ad2ff',   // the fighter
+    frameEmpty: 'rgba(20,26,34,0.9)'
+  },
+
+  /* Twenty-eight tiles, clockwise from the top-left corner. Colour groups
+     alternate between the two worlds the whole way round. */
+  tiles: [
+    { name: 'GO', corner: true },
+    { name: 'Pallet Town',    color: '#c9773f' },
+    { name: 'Viridian City',  color: '#c9773f' },
+    { name: 'Falcon',         color: '#8b95a3' },
+    { name: 'Tatooine',       color: '#ddb45e' },
+    { name: 'Jakku',          color: '#ddb45e' },
+    { name: 'Poke Center',    color: '#6f7d8c' },
+
+    { name: 'CARBONITE', corner: true },
+    { name: 'Cerulean City',  color: '#3fa2d8' },
+    { name: 'Vermilion City', color: '#3fa2d8' },
+    { name: 'Lapras',         color: '#8b95a3' },
+    { name: 'Hoth',           color: '#a6dcee' },
+    { name: 'Ilum',           color: '#a6dcee' },
+    { name: 'Chance',         color: '#6f7d8c' },
+
+    { name: 'CANTINA', corner: true },
+    { name: 'Lavender Town',  color: '#d06fa8' },
+    { name: 'Saffron City',   color: '#d06fa8' },
+    { name: 'X-Wing',         color: '#8b95a3' },
+    { name: 'Endor',          color: '#4fae5f' },
+    { name: 'Kashyyyk',       color: '#4fae5f' },
+    { name: 'Kyber Forge',    color: '#6f7d8c' },
+
+    { name: 'COMPACTOR', corner: true },
+    { name: 'Cinnabar Is.',   color: '#d8494e' },
+    { name: 'Indigo Plateau', color: '#d8494e' },
+    { name: 'Charizard',      color: '#8b95a3' },
+    { name: 'Coruscant',      color: '#7f8fd8' },
+    { name: 'Naboo',          color: '#7f8fd8' },
+    { name: 'Chance',         color: '#6f7d8c' }
+  ],
+
+  /* One per roll: a photograph and a line. Order is fixed; which square they
+     land on is whatever the dice say. Files go in photos/ -- missing ones
+     draw as empty frames, same as the other acts. */
+  reveals: [
+    { photo: 'board-1.jpg', line: 'four years of losing to you at everything' },
+    { photo: 'board-2.jpg', line: 'and still setting the board up again' },
+    { photo: 'board-3.jpg', line: 'you always did pick the better piece' },
+    { photo: 'board-4.jpg', line: 'same square, every time' }
+  ]
+};

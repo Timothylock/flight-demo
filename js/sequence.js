@@ -13,6 +13,7 @@
 const Sequence = (function () {
 
   let act2Exit = null;      // camera snapshot taken as the final pull-back starts
+  let resetFrom = null;     // layer opacities as the reset begins
 
   const state = {
     phase: 'IDLE',
@@ -26,7 +27,8 @@ const Sequence = (function () {
     narration: 0,         // the lines carried through the flying
     act2: 0,              // the scrapbook act
     board: 0,             // the LED flight board
-    act3: 0               // the water
+    act3: 0,              // the water
+    act4: 0               // the board
   };
 
   function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
@@ -113,6 +115,16 @@ const Sequence = (function () {
     Camera.set(Geo.invMercY(cy), Geo.invMercX(cx), zoom);
   }
 
+  /* Enter the reset, remembering what was lit so it can fade from there. */
+  function beginReset() {
+    resetFrom = {
+      title: state.title, act2: state.act2, board: state.board,
+      act3: state.act3, act4: state.act4
+    };
+    state.phase = 'RESET';
+    state.t = 0;
+  }
+
   function homeView() {
     return { lat: CONFIG.HOME.lat, lon: CONFIG.HOME.lon, zoom: Camera.homeZoom() };
   }
@@ -134,8 +146,11 @@ const Sequence = (function () {
     state.act2 = 0;
     state.board = 0;
     state.act3 = 0;
+    state.act4 = 0;
     act2Exit = null;
+    resetFrom = null;
     Act3.reset();
+    Act4.reset();
     Narration.clear();
     Scrapbook.reset();
     Flights.clearHero();
@@ -299,8 +314,27 @@ const Sequence = (function () {
       Act3.update(t, dt);
 
       if (t >= CONFIG.ACT3_SECONDS) {
-        state.phase = 'RESET';
+        state.phase = 'ACT4';
         state.t = 0;
+        Act4.build();
+      }
+      return;
+    }
+
+    if (state.phase === 'ACT4') {
+      const t = state.t;
+      /* Surfacing: the water gives way to the board under the flash. */
+      state.act4 = smooth(ramp(t, 0.0, CONFIG.ACT4.surfaceSeconds * 0.8));
+      state.act3 = 1 - smooth(ramp(t, 0.0, CONFIG.ACT4.surfaceSeconds));
+      state.act2 = 0;
+      state.board = 0;
+      state.map = 0;
+      state.hero = 0;
+      state.ambient = 0;
+      state.title = 0;
+
+      if (t >= CONFIG.ACT4_SECONDS) {
+        beginReset();
       }
       return;
     }

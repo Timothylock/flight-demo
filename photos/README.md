@@ -21,7 +21,14 @@ depths with two or three suspended at once, so they're seen at an angle and
 partly overlapped -- pick images that read at a glance rather than ones with
 detail in the corners.
 
-## Both acts
+## Act Four (the board)
+
+    board-1.jpg ... board-4.jpg
+
+One per dice roll, shown large in the middle of the board with the property
+name and a line underneath.
+
+## All acts
 
 Frames are 4:3 landscape. Photos are cropped to fill without distorting, so
 portrait shots will be centre-cropped; if most of yours are portrait, change
