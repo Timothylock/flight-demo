@@ -35,6 +35,13 @@ HOME = ["SEA", "PAE"]
 # anniversary rather than a round five years if you want the edge exact.
 EARLIEST = "2021-08-19"
 
+# Whole journeys to leave out, identified by the date their first leg departs.
+# Dropping the journey rather than the leg is the point: a trip is one path, and
+# removing a leg out of the middle of it would strand the rest.
+DROP_TRIPS = {
+    "2025-01-02",   # YYZ - SFO - HKG - TPE - HKG - HND - SEA
+}
+
 # Airports to leave out entirely. Both ends of any leg touching one are dropped.
 EXCLUDE = {"BCN", "LHR"}
 
@@ -251,7 +258,9 @@ def main():
         if pair not in arc_first:
             arc_first[pair] = leg["callsign"]
 
-    trips = [trim_return(t) for t in split_journeys(legs)]
+    trips = [t for t in split_journeys(legs)
+             if t[0]["date"].isoformat() not in DROP_TRIPS]
+    trips = [trim_return(t) for t in trips]
     shapes = dedupe(trips)
     journeys = order(shapes, arc_first)
 

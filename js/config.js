@@ -162,8 +162,8 @@ const NARRATION = [
   },
   {
     at: 0.62, hold: 5.5, after: 'KEF',
-    line1: 'One hundred and forty-six thousand miles',
-    line2: 'nearly six times around the world, together'
+    line1: 'One hundred and twenty-nine thousand miles',
+    line2: 'five times around the world, together'
   },
   {
     at: 0.74, hold: 5.5, after: 'CTS',

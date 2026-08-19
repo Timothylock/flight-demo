@@ -54,10 +54,10 @@ window.ROUTE_DATA = {
    "lat": 53.3097,
    "lon": -113.5801
   },
-  "SFO": {
-   "name": "San Francisco",
-   "lat": 37.6213,
-   "lon": -122.379
+  "NRT": {
+   "name": "Tokyo Narita",
+   "lat": 35.7647,
+   "lon": 140.3864
   },
   "HKG": {
    "name": "Hong Kong",
@@ -68,16 +68,6 @@ window.ROUTE_DATA = {
    "name": "Taipei",
    "lat": 25.0777,
    "lon": 121.2328
-  },
-  "HND": {
-   "name": "Tokyo Haneda",
-   "lat": 35.5494,
-   "lon": 139.7798
-  },
-  "NRT": {
-   "name": "Tokyo Narita",
-   "lat": 35.7647,
-   "lon": 140.3864
   },
   "KEF": {
    "name": "Reykjavik",
@@ -94,6 +84,11 @@ window.ROUTE_DATA = {
    "lat": 25.7959,
    "lon": -80.287
   },
+  "SFO": {
+   "name": "San Francisco",
+   "lat": 37.6213,
+   "lon": -122.379
+  },
   "YYC": {
    "name": "Calgary",
    "lat": 51.1139,
@@ -108,6 +103,11 @@ window.ROUTE_DATA = {
    "name": "Sapporo",
    "lat": 42.7752,
    "lon": 141.6923
+  },
+  "HND": {
+   "name": "Tokyo Haneda",
+   "lat": 35.5494,
+   "lon": 139.7798
   },
   "LAX": {
    "name": "Los Angeles",
@@ -221,50 +221,6 @@ window.ROUTE_DATA = {
    "date": "2025-09-04"
   },
   {
-   "callsign": "UAL 565",
-   "legs": [
-    {
-     "from": "YYZ",
-     "to": "SFO",
-     "callsign": "UAL 565",
-     "dup": false
-    },
-    {
-     "from": "SFO",
-     "to": "HKG",
-     "callsign": "UAL 869",
-     "dup": false
-    },
-    {
-     "from": "HKG",
-     "to": "TPE",
-     "callsign": "CPA 466",
-     "dup": false
-    },
-    {
-     "from": "TPE",
-     "to": "HKG",
-     "callsign": "CPA 466",
-     "dup": true
-    },
-    {
-     "from": "HKG",
-     "to": "HND",
-     "callsign": "ANA 860",
-     "dup": false
-    },
-    {
-     "from": "HND",
-     "to": "SEA",
-     "callsign": "ANA 118",
-     "dup": false
-    }
-   ],
-   "booked": false,
-   "count": 1,
-   "date": "2025-01-02"
-  },
-  {
    "callsign": "ACA 3",
    "legs": [
     {
@@ -277,6 +233,12 @@ window.ROUTE_DATA = {
      "from": "NRT",
      "to": "HKG",
      "callsign": "ANA 811",
+     "dup": false
+    },
+    {
+     "from": "HKG",
+     "to": "TPE",
+     "callsign": "CPA 466",
      "dup": false
     }
    ],
