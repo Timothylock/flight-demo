@@ -13,7 +13,7 @@ const CONFIG = {
      SEQUENCE_SECONDS is the whole show: launch -> zoom out -> everyone
      landed -> title card. Every other beat below is a fraction of it, so
      changing this one number retimes the entire piece.                     */
-  SEQUENCE_SECONDS: 15,
+  SEQUENCE_SECONDS: 30,
 
   /* How long the finished world view holds before it resets itself. */
   HOLD_SECONDS: 12,
@@ -109,8 +109,9 @@ const CONFIG = {
      Nothing leaves an airport until a flight has arrived there, so the map
      grows outward from Seattle rather than appearing all at once. */
   HERO_BOW: 0.9,            // slight per-flight arc offset so parallel routes separate
-  TURNAROUND: 0.10,         // pause between landing somewhere and departing it again
-  STAGGER: 0.16,            // spacing between flights leaving the same airport
+  LEG_DWELL: 0.05,          // pause on the ground between a journey's own legs
+  TURNAROUND: 0.10,         // pause before a newly reached airport sends its own trips
+  STAGGER: 0.16,            // spacing between journeys leaving the same airport
   PLANE_SIZE: 17,
   HERO_PLANE_SIZE: 23
 };
@@ -149,9 +150,9 @@ const REGIONAL_FIELDS = {
 
 const AIRPORTS = Object.assign({}, REGIONAL_FIELDS, ROUTE_DATA.airports);
 
-/* Every route the sequence flies, already in dependency order: each one
-   departs an airport an earlier route has reached. */
-const HERO_ROUTES = ROUTE_DATA.routes;
+/* Every journey the sequence flies, already in dependency order: each one
+   departs an airport an earlier journey has reached. */
+const HERO_ROUTES = ROUTE_DATA.journeys;
 
 /* Idle traffic: where the cold-open flights come from and go to. */
 const AMBIENT_ROUTES = [

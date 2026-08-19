@@ -182,43 +182,68 @@ const Flights = (function () {
 
   /* ------------------------------------------------------------------ hero */
 
-  /* Schedule the network.
+  /* Schedule the journeys.
 
-     Every route waits for its origin to be reached. SEA and PAE are reachable
-     from the start; everywhere else opens up the moment a flight lands there,
-     and then starts sending flights of its own. The result cascades outward
-     instead of firing all at once, and a two-leg trip -- Seattle to Vancouver
-     to Sapporo -- falls out of the ordering for free: the second leg simply
-     can't leave until the first has arrived.
+     A journey is one aircraft flying one path. Its legs run in order -- the
+     second cannot leave until the first has landed -- and it doesn't leave at
+     all until something has already arrived at its origin. So the map grows
+     outward from Seattle, and two separate trips never get their legs shuffled
+     together.
 
-     Times are computed in arbitrary units first, because a flight's departure
-     depends on other flights' durations, then scaled once at the end so the
-     last arrival lands exactly on the beat. */
+     Times are worked out in arbitrary units first, because a journey's
+     departure depends on other journeys' durations, then scaled once at the
+     end so the last arrival lands exactly on the beat. That keeps
+     SEQUENCE_SECONDS the only timing knob. */
   function buildHero() {
     heroes.length = 0;
     const SEQ = CONFIG.SEQUENCE_SECONDS;
     const landed = CONFIG.BEATS.allLanded * SEQ;
     const launch0 = CONFIG.BEATS.launchWindow[0] * SEQ;
 
-    const built = HERO_ROUTES.map(function (spec, index) {
+    const built = ROUTE_DATA.journeys.map(function (spec, index) {
       const bow = CONFIG.HERO_BOW * (index % 2 ? 1 : -1) * (0.6 + (index % 3) * 0.3);
-      const seg = route(spec.from, spec.to, bow, 110);
+      const stops = [spec.legs[0].from].concat(spec.legs.map(function (l) { return l.to; }));
+      const segs = spec.legs.map(function (l) {
+        const seg = route(l.from, l.to, bow, 110);
+        seg.callsign = l.callsign;
+        /* A leg whose line another journey already drew still has to be flown
+           -- the aircraft really did route back through this airport -- but
+           drawing it again would just thicken an arc that's already there. */
+        seg.dup = !!l.dup;
+        return seg;
+      });
+      let km = 0;
+      segs.forEach(function (seg) { km += seg.km; });
       return {
-        callsign: spec.callsign || (spec.from + '-' + spec.to),
-        stops: [spec.from, spec.to],
+        callsign: spec.callsign || stops.join('-'),
+        stops: stops,
         booked: !!spec.booked,
-        segs: [seg],
-        km: seg.km,
+        segs: segs,
+        km: km,
         index: index
       };
     });
 
     /* Flight time grows with distance, but sub-linearly -- otherwise Hong Kong
-       takes so long that the short hops look frozen. */
+       takes so long that the short hops look frozen.
+
+       The curve is applied to the journey's total distance and then split
+       across its legs, not charged per leg. Charged per leg, a six-leg trip
+       round the Pacific costs half again what the same distance would in one
+       hop, and since everything is scaled to the last arrival that one journey
+       stretched the whole sequence -- leaving five seconds at the end with a
+       single aircraft still crossing the ocean. */
     let mean = 0;
-    built.forEach(function (f) { f.raw = Math.pow(f.km, 0.7); mean += f.raw; });
+    built.forEach(function (f) {
+      f.rawTotal = Math.pow(f.km, 0.7);
+      f.raw = f.segs.map(function (seg) {
+        return f.km > 0 ? f.rawTotal * (seg.km / f.km) : f.rawTotal;
+      });
+      mean += f.rawTotal;
+    });
     mean /= Math.max(1, built.length);
 
+    const dwell = mean * CONFIG.LEG_DWELL;
     const turnaround = mean * CONFIG.TURNAROUND;
     const stagger = mean * CONFIG.STAGGER;
 
@@ -228,18 +253,22 @@ const Flights = (function () {
 
     let latest = 0;
     built.forEach(function (f) {
-      const from = f.stops[0], to = f.stops[1];
-      const ready = (reachedAt[from] === undefined ? 0 : reachedAt[from]) +
-                    (reachedAt[from] > 0 ? turnaround : 0);
-      /* Space out flights leaving the same field so they don't overlap. */
-      const dep = Math.max(ready, (lastDeparture[from] || 0) + stagger);
-      lastDeparture[from] = dep;
+      const origin = f.stops[0];
+      const arrived = reachedAt[origin] === undefined ? 0 : reachedAt[origin];
+      const ready = arrived + (arrived > 0 ? turnaround : 0);
+      /* Space out journeys leaving the same field so they don't overlap. */
+      let t = Math.max(ready, (lastDeparture[origin] || 0) + stagger);
+      lastDeparture[origin] = t;
+      f.t0 = t;
 
-      f.t0 = dep;
-      f.segs[0].start = dep;
-      f.segs[0].end = dep + f.raw;
-      f.tEnd = f.segs[0].end;
-      if (reachedAt[to] === undefined || f.tEnd < reachedAt[to]) reachedAt[to] = f.tEnd;
+      f.segs.forEach(function (seg, i) {
+        seg.start = t;
+        seg.end = t + f.raw[i];
+        const to = seg.to;
+        if (reachedAt[to] === undefined || seg.end < reachedAt[to]) reachedAt[to] = seg.end;
+        t = seg.end + dwell;
+      });
+      f.tEnd = f.segs[f.segs.length - 1].end;
       if (f.tEnd > latest) latest = f.tEnd;
     });
 
@@ -247,9 +276,11 @@ const Flights = (function () {
     const scale = latest > 0 ? (landed - launch0) / latest : 1;
     built.forEach(function (f) {
       f.t0 = launch0 + f.t0 * scale;
-      f.segs[0].start = launch0 + f.segs[0].start * scale;
-      f.segs[0].end = launch0 + f.segs[0].end * scale;
-      f.tEnd = f.segs[0].end;
+      f.segs.forEach(function (seg) {
+        seg.start = launch0 + seg.start * scale;
+        seg.end = launch0 + seg.end * scale;
+      });
+      f.tEnd = f.segs[f.segs.length - 1].end;
       f.arrived = [];
       heroes.push(f);
     });
@@ -312,6 +343,7 @@ const Flights = (function () {
         const st = heroState(f, t);
         if (!st) continue;
         for (let s = 0; s <= st.legIndex; s++) {
+          if (f.segs[s].dup) continue;
           const upto = s < st.legIndex || st.waiting || st.done ? 1 : st.f;
           strokeSegment(ctx, f.segs[s], 0, upto);
         }
@@ -326,7 +358,7 @@ const Flights = (function () {
     for (let i = 0; i < heroes.length; i++) {
       const f = heroes[i];
       const st = heroState(f, t);
-      if (!st || st.done) continue;
+      if (!st || st.done || st.seg.dup) continue;
       strokeSegment(ctx, st.seg, Math.max(0, st.f - 0.10), st.f);
     }
     ctx.stroke();
@@ -356,10 +388,14 @@ const Flights = (function () {
       drawPlane(ctx, p.x, p.y, at.heading, CONFIG.HERO_PLANE_SIZE,
                 CONFIG.COLORS.hero, alpha, 6);
 
-      const dest = f.stops[1];
-      const ly = drawLabel(ctx, 'hi:' + f.callsign, p.x + 14, p.y - 15, f.callsign,
+      /* Both lines describe the leg actually being flown. On a journey with
+         connections the aircraft changes flight number at each stop, and
+         naming the final destination while it's two legs short of it reads as
+         a mistake. */
+      const callsign = st.seg.callsign || f.callsign;
+      const ly = drawLabel(ctx, 'hi:' + f.callsign, p.x + 14, p.y - 15, callsign,
                            alpha * 0.95, CONFIG.COLORS.heroLabel, 12);
-      drawLabel(ctx, null, p.x + 14, p.y - 3, f.stops[0] + '→' + dest,
+      drawLabel(ctx, null, p.x + 14, p.y - 3, st.seg.from + '→' + st.seg.to,
                 alpha * 0.55, CONFIG.COLORS.label, 10, ly + 12);
     }
   }
@@ -373,9 +409,11 @@ const Flights = (function () {
   function heroStops() {
     const seen = {};
     const out = [];
-    HERO_ROUTES.forEach(function (spec) {
-      [spec.from, spec.to].forEach(function (code) {
-        if (!seen[code]) { seen[code] = true; out.push(code); }
+    ROUTE_DATA.journeys.forEach(function (spec) {
+      spec.legs.forEach(function (leg) {
+        [leg.from, leg.to].forEach(function (code) {
+          if (!seen[code]) { seen[code] = true; out.push(code); }
+        });
       });
     });
     return out;
