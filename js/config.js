@@ -464,7 +464,13 @@ CONFIG.ACT2_FLIGHTS = [
     from: 'YVR', to: 'NRT', route: 'YVR-NRT', aircraft: '777-300ER',
     fromName: 'Vancouver Intl', toName: 'Tokyo Narita',
     place: 'JAPAN', zoom: 4.6, fan: -0.55,
-    photos: ['japan-1.jpg', 'japan-2.jpg', 'japan-3.jpg']
+    /* `crop` is where a too-tall picture is cropped from: 0 the top edge,
+       1 the bottom. Left off, js/photo.js decides. */
+    photos: [
+      { name: 'japan-1.jpeg', crop: 0.18 },   // torii: keep the top beam, sit the two of you off the bottom edge
+      'japan-2.jpeg',                          // selfie: faces land mid-frame already
+      'japan-3.jpeg'                           // already 4:3, nothing to crop
+    ]
   },
   {
     airlineKey: 'NH', airline: 'ANA', flight: 'NH 811',
@@ -478,14 +484,24 @@ CONFIG.ACT2_FLIGHTS = [
     from: 'HKG', to: 'TPE', route: 'HKG-TPE', aircraft: '787-9',
     fromName: 'Hong Kong Intl', toName: 'Taipei Taoyuan',
     place: 'TAIWAN', zoom: 5.6, fan: 1.15,
-    photos: ['taiwan-1.jpg', 'taiwan-2.jpg']
+    photos: [
+      'taiwan-1.jpeg',                         // lanterns, already 4:3
+      { name: 'taiwan-2.jpeg', crop: 0.42 },   // sky lantern: the default cropped both of you out entirely
+      'taiwan-3.jpeg',                         // Taipei 101, the heart lands mid-frame
+      'taiwan-4.jpeg'                          // mascot, faces and its head both fit
+    ]
   },
   {
     airlineKey: 'FI', airline: 'Icelandair', flight: 'FI 694',
     from: 'YVR', to: 'KEF', route: 'YVR-KEF', aircraft: '737 MAX 8',
     fromName: 'Vancouver Intl', toName: 'Keflavik Intl',
     place: 'ICELAND', zoom: 4.8, fan: 0.1,
-    photos: ['iceland-1.jpg', 'iceland-2.jpg', 'iceland-3.jpg']
+    photos: [
+      { name: 'iceland-1.jpeg', crop: 0.22 },  // greenhouse: down a little, off the roof girders
+      'iceland-2.jpeg',                        // waterfall, already 4:3
+      { name: 'iceland-3.jpeg', crop: 0.48 },  // basalt: faces were hard against the bottom edge
+      'iceland-4.jpeg'                         // glacier, already 4:3
+    ]
   }
 ];
 

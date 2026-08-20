@@ -1,16 +1,33 @@
 # Photographs
 
-Drop images in here using the filenames listed in `CONFIG.ACT2_FLIGHTS`
-(`js/config.js`):
+Filenames come from `js/config.js`. Everything here is already sized for the
+piece -- 2400px on the long edge, EXIF rotation applied.
 
-    japan-1.jpg  japan-2.jpg  japan-3.jpg
-    hongkong-1.jpg  hongkong-2.jpg  hongkong-3.jpg
-    taiwan-1.jpg  taiwan-2.jpg
-    iceland-1.jpg  iceland-2.jpg  iceland-3.jpg
+## Act Two (the scrapbook)
 
-Anything missing draws as an empty frame carrying the place name, so the
-sequence looks finished before a single photo is added. Add or rename files in
-the config to change how many each place gets — no other code to touch.
+    japan-1..3.jpeg     taiwan-1..4.jpeg     iceland-1..4.jpeg
+    hongkong-1..3.jpg   -- still to come
+
+Frames are pinned to the map at each destination and fan out as the aircraft
+arrives. Change how many a place gets by editing
+`CONFIG.ACT2_FLIGHTS[].photos`; the fan has layouts for one through four.
+
+An entry is either a filename or a filename with a crop:
+
+```js
+photos: [
+  { name: 'japan-1.jpeg', crop: 0.18 },   // where a too-tall picture is cropped from
+  'japan-2.jpeg'                          // no crop given: js/photo.js decides
+]
+```
+
+The four that carry one were checked against the frame rather than guessed --
+`taiwan-2` in particular, where the default crop cut the sky lantern and both
+of you clean out of the picture.
+
+Hong Kong is the one place still on placeholders. Anything missing draws as an
+empty frame carrying the place name, so the sequence looks finished before a
+single photograph is added.
 
 ## Act Three (underwater)
 

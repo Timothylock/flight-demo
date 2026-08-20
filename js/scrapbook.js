@@ -52,10 +52,13 @@ const Scrapbook = (function () {
        pull-back three identical fans merge into one unreadable pile. */
     const rot = fanAngle || 0;
     const cs = Math.cos(rot), sn = Math.sin(rot);
-    const frames = photos.map(function (name, i) {
+    const frames = photos.map(function (spec, i) {
       const slot = fan[i % fan.length];
+      /* A photograph is either a filename or a filename with a crop -- see
+         js/photo.js for what the number means. */
       return {
-        name: name,
+        name: typeof spec === 'string' ? spec : spec.name,
+        crop: typeof spec === 'string' ? undefined : spec.crop,
         dx: (slot[0] * cs - slot[1] * sn) * S.radius,
         dy: (slot[0] * sn + slot[1] * cs) * S.radius,
         tilt: ((i * 37) % 13 - 6) / 6 * S.tilt * Math.PI / 180,
@@ -63,7 +66,9 @@ const Scrapbook = (function () {
       };
     });
     clusters.push({ lat: a.lat, lon: a.lon, place: place, frames: frames });
-    photos.forEach(load);
+    photos.forEach(function (spec) {
+      load(typeof spec === 'string' ? spec : spec.name);
+    });
   }
 
   function easeOutBack(t) {
@@ -119,7 +124,7 @@ const Scrapbook = (function () {
 
         const img = images.get(f.name);
         if (img && img !== 'loading' && img !== 'missing') {
-          Photo.cover(ctx, img, -fw / 2, -fh / 2, fw, fh);
+          Photo.cover(ctx, img, -fw / 2, -fh / 2, fw, fh, f.crop);
         } else {
           /* Waiting for a photograph. */
           ctx.fillStyle = '#141414';
