@@ -96,13 +96,16 @@ const Act3 = (function () {
     const list = A.photos;
     const T = CONFIG.ACT3_SECONDS;
     const window0 = A.photosStart, window1 = T - A.photosEnd;
-    photos = list.map(function (name, i) {
+    photos = list.map(function (spec, i) {
+      /* Either a filename or a filename with a crop -- see js/photo.js. */
+      const name = typeof spec === 'string' ? spec : spec.name;
       const slot = list.length === 1 ? 0 : i / (list.length - 1);
       const angle = -1.9 + i * 2.39;          // walk around the centre
       const radius = 0.58 + (i % 3) * 0.34;
       load(name);
       return {
         name: name,
+        crop: typeof spec === 'string' ? undefined : spec.crop,
         x: Math.cos(angle) * radius,
         y: Math.sin(angle) * radius * 0.8,
         z: rnd(1.5, 2.5),
@@ -302,7 +305,7 @@ const Act3 = (function () {
 
       const img = images.get(ph.name);
       if (img && img !== 'loading' && img !== 'missing') {
-        Photo.cover(ctx, img, -w / 2, -h / 2, w, h);
+        Photo.cover(ctx, img, -w / 2, -h / 2, w, h, ph.crop);
       } else {
         ctx.fillStyle = A.colors.frameEmpty;
         ctx.fillRect(-w / 2, -h / 2, w, h);

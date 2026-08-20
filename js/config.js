@@ -611,9 +611,16 @@ CONFIG.ACT3 = {
   /* Photographs. Six to eight, hanging at staggered depths so two or three
      are suspended at once, drifting past each other. Missing files draw as
      empty frames, same as Act Two. */
+  /* Same as Act Two: a filename, or a filename with a crop. Six of them at
+     this spacing keeps two or three suspended at once, which is the density
+     the act was built for. */
   photos: [
-    'northcascades.jpeg', 'water-2.jpg', 'water-3.jpg', 'water-4.jpg',
-    'water-5.jpg', 'water-6.jpg', 'water-7.jpg'
+    'northcascades.jpeg',                     // already a wide panorama
+    { name: 'water-2.jpeg', crop: 0.28 },     // greenhouse: faces sat low
+    { name: 'water-3.jpeg', crop: 0.58 },     // standing on the snow, full length
+    { name: 'water-4.jpeg', crop: 0.45 },     // faces were on the bottom edge
+    { name: 'water-5.jpeg', crop: 0.40 },     // the lights
+    { name: 'water-6.jpeg', crop: 0.45 }      // under the ship
   ],
   photoSize: 0.80,        // world units; scales with distance
   photoLife: 7.5,         // seconds each stays before drifting off

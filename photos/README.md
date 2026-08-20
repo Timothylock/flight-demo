@@ -36,12 +36,18 @@ untouched, 0 makes them match the map.
 
 ## Act Three (underwater)
 
-    northcascades.jpeg   water-2.jpg ... water-7.jpg
+    northcascades.jpeg   water-2..6.jpeg
 
-Same rule: anything missing floats as an empty frame. These drift at different
-depths with two or three suspended at once, so they're seen at an angle and
-partly overlapped -- pick images that read at a glance rather than ones with
-detail in the corners.
+Same rule as Act Two: a filename, or a filename with a crop. Six at this
+spacing keeps two or three suspended at once, which is the density the act was
+built for -- more would crowd, fewer would leave gaps.
+
+They drift at different depths and are seen at an angle, partly overlapped, so
+pick images that read at a glance rather than ones with detail in the corners.
+
+Note the act is underwater and its three lines are about being in the water.
+The photographs in here at the moment are not -- swap them for beach and
+swimming ones if you have them, or rewrite `CONFIG.ACT3.lines`.
 
 ## Act Four (the board)
 
