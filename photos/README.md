@@ -45,9 +45,8 @@ built for -- more would crowd, fewer would leave gaps.
 They drift at different depths and are seen at an angle, partly overlapped, so
 pick images that read at a glance rather than ones with detail in the corners.
 
-Note the act is underwater and its three lines are about being in the water.
-The photographs in here at the moment are not -- swap them for beach and
-swimming ones if you have them, or rewrite `CONFIG.ACT3.lines`.
+The act's lines no longer claim anything about water, so photographs of
+anywhere work here. Swap in beach and swimming ones if you'd rather.
 
 ## Act Four (the board)
 

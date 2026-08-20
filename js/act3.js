@@ -355,15 +355,23 @@ const Act3 = (function () {
       ctx.shadowColor = 'rgba(0,30,40,0.9)';
       ctx.shadowBlur = 18 * scale;
       ctx.fillStyle = A.colors.text;
-      ctx.font = '500 ' + (34 * scale) + 'px ui-monospace, SFMono-Regular, Menlo, monospace';
-      ctx.letterSpacing = (7 * scale) + 'px';
-      ctx.fillText(line.line1, cx, cy);
 
       if (line.line2) {
+        /* A declaration and the sentence that explains it. */
+        ctx.font = '500 ' + (34 * scale) + 'px ui-monospace, SFMono-Regular, Menlo, monospace';
+        ctx.letterSpacing = (7 * scale) + 'px';
+        ctx.fillText(line.line1, cx, cy);
         ctx.font = 'italic ' + (25 * scale) + 'px Georgia, "Times New Roman", serif';
         ctx.letterSpacing = (1 * scale) + 'px';
         ctx.fillStyle = A.colors.textSoft;
         ctx.fillText(line.line2, cx, cy + 42 * scale);
+      } else {
+        /* A beat on its own is an aside, not an announcement -- so it gets the
+           quiet face rather than the shouting one. Set line2 and it goes back
+           to a heading with a sentence under it. */
+        ctx.font = 'italic ' + (30 * scale) + 'px Georgia, "Times New Roman", serif';
+        ctx.letterSpacing = (1 * scale) + 'px';
+        ctx.fillText(line.line1, cx, cy);
       }
     }
     ctx.restore();

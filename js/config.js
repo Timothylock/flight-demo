@@ -631,16 +631,30 @@ CONFIG.ACT3 = {
   /* Two or three lines, spread through. Same draft caveat as Act One's
      narration -- rewrite them. */
   textFade: 1.1,
+  /* One line each, no heading, nothing explaining itself. The corniness was
+     structural rather than a word choice: every beat was A DECLARATION with a
+     soft sentence under it saying what the declaration meant, which is the
+     same shape as the title card, three times over, in the slowest act. A
+     single short line can't posture. Give a beat a `line2` and it goes back to
+     a heading with a sentence under it.
+
+     These also stop claiming anything about water, which the photographs
+     currently in the act do not support.
+
+     Two other directions, if this one isn't right -- drop them in place:
+
+       dry, in the register of the board act
+         'we have queued for eleven hours to get here'
+         'nothing is boarding'
+         'you can stop checking your phone'
+
+       or nothing at all: set lines to [] and let the act play in silence.
+       Twenty seconds of drifting with no words is a real option, and the
+       finale still gets the last line to itself. */
   lines: [
-    { at: 2.0,  hold: 3.4, y: 0.30,
-      line1: 'AND THEN THERE IS THE WATER',
-      line2: 'the first thing we look for, everywhere we go' },
-    { at: 8.5,  hold: 3.4, y: 0.72,
-      line1: 'NO DEPARTURE BOARDS DOWN HERE',
-      line2: 'nowhere to be, nothing to catch' },
-    { at: 15.0, hold: 3.2, y: 0.30,
-      line1: 'STAY IN A WHILE',
-      line2: 'we have got time' }
+    { at: 2.0,  hold: 3.6, y: 0.30, line1: 'no flights today' },
+    { at: 8.4,  hold: 3.6, y: 0.72, line1: 'nothing boarding, nothing closing' },
+    { at: 14.2, hold: 3.4, y: 0.30, line1: 'we can stay down here a while' }
   ]
 };
 
