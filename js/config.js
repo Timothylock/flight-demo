@@ -71,6 +71,20 @@ const CONFIG = {
      the detailed set is what makes a country close-up look like that country. */
   FINE_DETAIL_ZOOM: 2.6,
 
+  /* What the vector map is allowed to skip, in screen pixels: a polygon
+     smaller than `poly` is dropped whole, and a vertex within `vertex` of the
+     last one kept is dropped as the path is traced.
+
+     Both tighten as the camera comes in and loosen as it goes out, which is
+     the whole point -- pulled back, sixty thousand vertices and fourteen
+     hundred polygons land on top of each other and cost a fifth of a second a
+     frame; close in, every one of them is worth drawing. Interpolated between
+     these two zooms, so there is no step to see. */
+  WORLD_LOD: {
+    closeZoom: 4.5, closePoly: 1.5, closeVertex: 0.6,
+    wideZoom:  3.0, widePoly:  6.0, wideVertex:  2.0
+  },
+
   CAMERA_FOLLOW_TAU: 2.6,       // seconds for the camera to settle on a new fit
   WORLD_PADDING: 0.06,          // breathing room around the outermost airports
   WORLD_BOTTOM_RESERVE: 0.26,   // strip along the bottom kept clear for the title

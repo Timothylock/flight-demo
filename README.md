@@ -165,6 +165,17 @@ map library: the whole piece is a single continuous fractional zoom from z8 out
 to the world, and slippy maps step through integer zoom levels, which you'd see
 as a stutter the entire way out.
 
+Pulled back, that vector map is nearly the whole frame's work -- every polygon
+is on screen at once, up to three copies of the world side by side, and most
+of the vertices land under a pixel. Three things in `js/worldlayer.js` keep it
+affordable, and none of them do anything when the camera is close: every
+point's Mercator projection is computed once at load rather than per frame (it
+is a tan, a cos and a log per vertex, and there are sixty thousand of them);
+polygons too small to read are skipped whole; and vertices that land on top of
+the last one kept are dropped as the path is traced. The last two are measured
+in screen pixels and scale with the zoom, so a close-up is drawn from every
+vertex it has. `CONFIG.WORLD_LOD` sets both ends.
+
 | | |
 |---|---|
 | `js/config.js` | timing, palette, idle traffic |

@@ -2,7 +2,25 @@
    canvas. This is what keeps the pull-back crisp -- raster tiles for the whole
    globe would be either enormous or soft, and on a projector soft is obvious.
 
-   Two levels of detail: 110m for the world view, 50m once we're close. */
+   Two levels of detail: 110m for the world view, 50m once we're close.
+
+   Zoomed out this layer is nearly the whole frame's work: every polygon is on
+   screen, up to three copies of the world at once, and most of the vertices
+   land under a pixel apiece. Three things keep that affordable, and none of
+   them cost anything close in --
+
+     the Mercator projection of every point is computed once, at load, rather
+     than per frame (it is a tan, a cos and a log per vertex, and there are
+     sixty thousand of them);
+
+     polygons too small to read on screen are skipped whole, which at world
+     scale is most of the islands;
+
+     and vertices that land on top of the last one kept are dropped as the path
+     is traced, so a coastline costs what it can actually show.
+
+   The last two are measured in screen pixels and scale with the zoom, so they
+   do nothing at all when the camera is close. */
 
 const WorldLayer = (function () {
 
@@ -17,17 +35,39 @@ const WorldLayer = (function () {
       const src = WORLD_DATA[lod];
       prepared[lod] = {
         land: src.land.map(function (poly) {
-          return { rings: poly, box: boxOf(poly[0]) };
+          return { rings: poly.map(merc), box: boxOf(poly[0]) };
         }),
         borders: src.borders.map(function (line) {
-          return { pts: line, box: boxOf(line) };
+          return { pts: merc(line), box: boxOf(line) };
         }),
         lakes: src.lakes.map(function (poly) {
-          return { rings: poly, box: boxOf(poly[0]) };
+          return { rings: poly.map(merc), box: boxOf(poly[0]) };
         })
       };
     });
     return prepared;
+  }
+
+  /* lon/lat pairs -> Mercator 0..1 pairs, once, at load. Doing this per frame
+     put a tan, a cos and a log on every one of sixty thousand vertices. */
+  function merc(flat) {
+    const out = new Float64Array(flat.length);
+    for (let i = 0; i < flat.length; i += 2) {
+      out[i] = Geo.mercX(flat[i]);
+      out[i + 1] = Geo.mercY(flat[i + 1]);
+    }
+    return out;
+  }
+
+  /* How much detail is worth drawing at this zoom, in screen pixels. */
+  function budget() {
+    const L = CONFIG.WORLD_LOD;
+    const k = Math.max(0, Math.min(1,
+      (Camera.zoom - L.wideZoom) / (L.closeZoom - L.wideZoom)));
+    return {
+      poly: L.widePoly + (L.closePoly - L.widePoly) * k,
+      vertex: L.wideVertex + (L.closeVertex - L.wideVertex) * k
+    };
   }
 
   function boxOf(flat) {
@@ -53,21 +93,39 @@ const WorldLayer = (function () {
     return out.length ? out : [0];
   }
 
-  function visible(box, dx) {
+  /* Off screen, or too small to be worth drawing. At the world view the fine
+     set carries several hundred islands that come out under a pixel across;
+     they cost as much as a continent and read as grain. */
+  function skip(box, dx, min) {
     const a = Camera.project(box.n, box.w);
     const b = Camera.project(box.s, box.e);
-    return !(a.x + dx > Camera.width + 40 || b.x + dx < -40 ||
-             a.y > Camera.height + 40 || b.y < -40);
+    if (a.x + dx > Camera.width + 40 || b.x + dx < -40 ||
+        a.y > Camera.height + 40 || b.y < -40) return true;
+    return (b.x - a.x) < min && (b.y - a.y) < min;
   }
 
-  function tracePath(ctx, flat, dx) {
+  /* Trace already-projected points, dropping any that land on top of the last
+     one we kept. Comparing on each axis rather than by distance keeps it to a
+     pair of subtractions per vertex, which matters when there are sixty
+     thousand of them. The last point is always kept so a ring still closes
+     where it should. */
+  function tracePath(ctx, m, dx, tol) {
     const s = Camera.scale();
     const cx = Geo.mercX(Camera.lon), cy = Geo.mercY(Camera.lat);
-    const hw = Camera.width / 2, hh = Camera.height / 2;
-    for (let i = 0; i < flat.length; i += 2) {
-      const x = (Geo.mercX(flat[i]) - cx) * s + hw + dx;
-      const y = (Geo.mercY(flat[i + 1]) - cy) * s + hh;
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    const hw = Camera.width / 2 + dx, hh = Camera.height / 2;
+    const last = m.length - 2;
+    let px = 0, py = 0;
+    for (let i = 0; i < m.length; i += 2) {
+      const x = (m[i] - cx) * s + hw;
+      const y = (m[i + 1] - cy) * s + hh;
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        const ax = x - px, ay = y - py;
+        if (i !== last && (ax < tol && ax > -tol) && (ay < tol && ay > -tol)) continue;
+        ctx.lineTo(x, y);
+      }
+      px = x; py = y;
     }
   }
 
@@ -90,6 +148,7 @@ const WorldLayer = (function () {
     const lod = fine ? data.fine : data.coarse;
     const offsets = copies();
     const fillAlpha = opacity;
+    const budg = budget();
 
     ctx.save();
     ctx.lineJoin = 'round';
@@ -103,9 +162,9 @@ const WorldLayer = (function () {
       const dx = offsets[o];
       for (let i = 0; i < lod.land.length; i++) {
         const poly = lod.land[i];
-        if (!visible(poly.box, dx)) continue;
+        if (skip(poly.box, dx, budg.poly)) continue;
         for (let r = 0; r < poly.rings.length; r++) {
-          tracePath(ctx, poly.rings[r], dx);
+          tracePath(ctx, poly.rings[r], dx, budg.vertex);
           ctx.closePath();
         }
       }
@@ -131,9 +190,9 @@ const WorldLayer = (function () {
         const dx = offsets[o];
         for (let i = 0; i < lod.lakes.length; i++) {
           const lake = lod.lakes[i];
-          if (!visible(lake.box, dx)) continue;
+          if (skip(lake.box, dx, budg.poly)) continue;
           for (let r = 0; r < lake.rings.length; r++) {
-            tracePath(ctx, lake.rings[r], dx);
+            tracePath(ctx, lake.rings[r], dx, budg.vertex);
             ctx.closePath();
           }
         }
@@ -150,8 +209,8 @@ const WorldLayer = (function () {
       const dx = offsets[o];
       for (let i = 0; i < lod.borders.length; i++) {
         const line = lod.borders[i];
-        if (!visible(line.box, dx)) continue;
-        tracePath(ctx, line.pts, dx);
+        if (skip(line.box, dx, budg.poly)) continue;
+        tracePath(ctx, line.pts, dx, budg.vertex);
       }
     }
     ctx.stroke();
