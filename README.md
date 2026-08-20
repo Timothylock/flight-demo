@@ -55,6 +55,14 @@ The final camera view fits itself to wherever the routes actually go, so a set
 of trips that never leaves Europe ends on Europe rather than on the whole
 globe. Nothing to retune.
 
+**The photographs.** Act Two's frames are listed per destination in
+`CONFIG.ACT2_FLIGHTS[].photos`, as either a filename or `{ name, crop }` --
+`crop` says where a picture too tall for its 4:3 frame is taken from, 0 the top
+edge and 1 the bottom, and `js/photo.js` decides when it isn't given. They are
+drawn at `CONFIG.SCRAPBOOK.saturation`, part way back off full colour so they
+sit in a monochrome map rather than on top of it. Acts Three and Four are in
+colour anyway and leave their photographs alone.
+
 **The idle traffic.** `AMBIENT_FLIGHTS` is the cold open's background, and it
 is the one part of the piece that isn't about us: real services, each callsign
 paired with a route that airline genuinely flies. Paine Field only ever gets

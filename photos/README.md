@@ -5,8 +5,8 @@ piece -- 2400px on the long edge, EXIF rotation applied.
 
 ## Act Two (the scrapbook)
 
-    japan-1..3.jpeg     taiwan-1..4.jpeg     iceland-1..4.jpeg
-    hongkong-1..3.jpg   -- still to come
+    japan-1..3.jpeg     hongkong-1..3.jpeg
+    taiwan-1..4.jpeg    iceland-1..4.jpeg
 
 Frames are pinned to the map at each destination and fan out as the aircraft
 arrives. Change how many a place gets by editing
@@ -25,9 +25,14 @@ The four that carry one were checked against the frame rather than guessed --
 `taiwan-2` in particular, where the default crop cut the sky lantern and both
 of you clean out of the picture.
 
-Hong Kong is the one place still on placeholders. Anything missing draws as an
-empty frame carrying the place name, so the sequence looks finished before a
-single photograph is added.
+Anything missing draws as an empty frame carrying the place name, so the
+sequence looks finished before a single photograph is added.
+
+Acts One and Two are monochrome and the photographs are the exception, so they
+are drawn at `CONFIG.SCRAPBOOK.saturation` -- 0.62, part way back off full
+colour. Enough to sit in the map rather than float on top of it, not so far
+that the one warm thing in the first two acts goes grey. 1 leaves them
+untouched, 0 makes them match the map.
 
 ## Act Three (underwater)
 

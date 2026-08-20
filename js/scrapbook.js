@@ -124,7 +124,14 @@ const Scrapbook = (function () {
 
         const img = images.get(f.name);
         if (img && img !== 'loading' && img !== 'missing') {
+          /* Pulled back off full colour so the frames sit in a monochrome map
+             rather than on top of it -- but only part way, because a colour
+             photograph is the one warm thing in the first two acts and going
+             all the way to grey throws that away. */
+          const sat = S.saturation;
+          if (sat !== undefined && sat < 1) ctx.filter = 'saturate(' + sat + ')';
           Photo.cover(ctx, img, -fw / 2, -fh / 2, fw, fh, f.crop);
+          ctx.filter = 'none';
         } else {
           /* Waiting for a photograph. */
           ctx.fillStyle = '#141414';

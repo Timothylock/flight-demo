@@ -477,7 +477,11 @@ CONFIG.ACT2_FLIGHTS = [
     from: 'NRT', to: 'HKG', route: 'NRT-HKG', aircraft: '787-8',
     fromName: 'Tokyo Narita', toName: 'Hong Kong Intl',
     place: 'HONG KONG', zoom: 5.4, fan: 2.5,
-    photos: ['hongkong-1.jpg', 'hongkong-2.jpg', 'hongkong-3.jpg']
+    photos: [
+      'hongkong-1.jpeg',                        // harbour skyline, already 4:3
+      'hongkong-2.jpeg',                        // the castle at night, already 4:3
+      { name: 'hongkong-3.jpeg', crop: 0.46 }   // the Peak: faces sat on the bottom edge
+    ]
   },
   {
     airlineKey: 'BR', airline: 'EVA Air', flight: 'BR 872',
@@ -510,6 +514,10 @@ CONFIG.SCRAPBOOK = {
   dir: 'photos/',
   frameW: 210,            // px at 1920 wide, scaled with the viewport
   frameH: 158,            // 4:3 landscape
+  /* Acts One and Two are monochrome. The photographs are the exception, but
+     at full strength they float rather than sit -- this takes the colour back
+     far enough to belong on the map and no further. 1 is untouched, 0 grey. */
+  saturation: 0.62,
   border: 9,
   gap: 22,
   fullScaleZoom: 5.0,     // frames are full size at about this zoom
