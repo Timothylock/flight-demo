@@ -14,7 +14,7 @@ the config to change how many each place gets — no other code to touch.
 
 ## Act Three (underwater)
 
-    water-1.jpg ... water-7.jpg
+    northcascades.jpeg   water-2.jpg ... water-7.jpg
 
 Same rule: anything missing floats as an empty frame. These drift at different
 depths with two or three suspended at once, so they're seen at an angle and
@@ -23,32 +23,33 @@ detail in the corners.
 
 ## Act Four (the board)
 
-    board-1.jpg   d23.jpeg   board-3.jpg   disney.jpeg
+    vancouver.jpeg   d23.jpeg   disney.jpeg
 
-One per dice roll, shown large in the middle of the board with the square's
-name and a line underneath, in that order.
+One per landing, shown large in the middle of the board with the square's name
+and a line underneath. The dice are arranged so the tokens land on
+**Vancouver**, then **Anaheim**, then **Disneyland CA** -- so the photographs
+and the place names always agree.
 
-The last two are the point of the act. The dice are arranged so both tokens
-finish on **Disneyland CA**, and the landing before that pair is **Anaheim** --
-so `d23.jpeg` (the expo) lands on Anaheim, and `disney.jpeg` lands on
-Disneyland as the second token joins the first.
+Only three photographs for four turns, because the last two landings are the
+same square: one token arrives at Disneyland, the other joins it. They share
+the picture and only the line changes, which is why it doesn't re-lay itself
+between the two.
 
-Because both tokens land on Disneyland -- one arrives, then the other joins it
--- that square gets two reveals. `board-3.jpg` is the first of them and wants a
-second Disneyland photograph; without one it draws as an empty frame between
-two real pictures.
-
-## The finale
-
-    last.jpeg
-
-One photograph, alone on black, held for ten seconds with a single line under
-it. It is the last thing seen before the radar comes back, so it wants to be
-the best one -- and a bright one: everything around it is black, and a dark
-photo reads as an empty frame.
+To use different places, rename the squares in `CONFIG.ACT4.tiles`, then point
+`land` and `finishOn` at the new names -- they are matched by name, so nothing
+breaks if a tile moves.
 
 ## All acts
 
-Frames are 4:3 landscape. Photos are cropped to fill without distorting, so
-portrait shots will be centre-cropped; if most of yours are portrait, change
-`CONFIG.SCRAPBOOK.frameW`/`frameH`.
+Every frame crops to fill rather than letterboxing -- a black bar inside a
+frame on a ceiling reads as a mistake. Where the crop is taken from depends on
+the picture: one wider than its frame loses its sides and keeps the middle,
+which is what a panorama wants. One taller than its frame loses top or bottom,
+and there the middle is exactly wrong, because people stand in the upper half
+of a portrait photograph and a centred crop takes their chins off. Portraits
+are therefore cropped from near the top. That rule lives in `js/photo.js`;
+`CONFIG.FINALE.crop` and a reveal's `crop` override it with a number from 0
+(hard to the top) to 1 (hard to the bottom).
+
+Anything missing draws as an empty frame, so the piece looks finished before a
+single photograph is added.

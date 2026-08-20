@@ -302,11 +302,7 @@ const Act3 = (function () {
 
       const img = images.get(ph.name);
       if (img && img !== 'loading' && img !== 'missing') {
-        const ar = img.width / img.height, fr = w / h;
-        let sw = img.width, sh = img.height, sx = 0, sy = 0;
-        if (ar > fr) { sw = img.height * fr; sx = (img.width - sw) / 2; }
-        else { sh = img.width / fr; sy = (img.height - sh) / 2; }
-        ctx.drawImage(img, sx, sy, sw, sh, -w / 2, -h / 2, w, h);
+        Photo.cover(ctx, img, -w / 2, -h / 2, w, h);
       } else {
         ctx.fillStyle = A.colors.frameEmpty;
         ctx.fillRect(-w / 2, -h / 2, w, h);

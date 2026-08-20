@@ -588,7 +588,7 @@ CONFIG.ACT3 = {
      are suspended at once, drifting past each other. Missing files draw as
      empty frames, same as Act Two. */
   photos: [
-    'water-1.jpg', 'water-2.jpg', 'water-3.jpg', 'water-4.jpg',
+    'northcascades.jpeg', 'water-2.jpg', 'water-3.jpg', 'water-4.jpg',
     'water-5.jpg', 'water-6.jpg', 'water-7.jpg'
   ],
   photoSize: 0.80,        // world units; scales with distance
@@ -706,7 +706,7 @@ CONFIG.ACT4 = {
     { name: 'Falcon',         color: '#8b95a3', price: 200, art: 'ship' },
     { name: 'Tatooine',       color: '#ddb45e', price: 100 },
     { name: 'Jakku',          color: '#ddb45e', price: 100 },
-    { name: 'Poke Center',    color: '#6f7d8c', price: 150, art: 'util' },
+    { name: 'Vancouver',      color: '#a06fd6', price: 400 },
 
     { name: 'CARBONITE', corner: true, art: 'jail' },
     { name: 'Cerulean City',  color: '#3fa2d8', price: 140 },
@@ -736,24 +736,26 @@ CONFIG.ACT4 = {
   /* One per roll: a photograph and a line. Order is fixed; which square they
      land on is whatever the dice say. Files go in photos/ -- missing ones
      draw as empty frames, same as the other acts. */
-  /* The finish is arranged, and now it is arranged somewhere in particular.
-     Both tokens end on `finishOn`, and the landing before that pair is
-     `beforeFinish` -- named rather than indexed, so moving a tile around the
-     board doesn't quietly break it. Every roll is still an ordinary pair of
-     dice and no token moves further than it threw; the planner solves for the
-     dice that get there instead of throwing sequences away until one does.
+  /* Where the game is arranged to go. `land` names the squares the tokens
+     stop on, in order, and `finishOn` is where they both end up -- names
+     rather than indices, so moving a tile around the board can't quietly
+     break the ending. Any landing `land` doesn't name is left to the dice.
 
-     Note the last two reveals share a square: one token arrives, then the
-     other joins it. That is the point of the act, and it is why Disneyland
-     gets two photographs. */
+     Every roll is still a pair two real dice could have thrown and no token
+     moves further than it threw; the planner solves for the dice that cover
+     each distance instead of throwing sequences away until one happens to.
+
+     The last two reveals share a square -- one token arrives, then the other
+     joins it, which is the point of the act. They therefore share a
+     photograph too, and only the line changes. */
+  land: ['Vancouver', 'Anaheim'],
   finishOn: 'Disneyland CA',
-  beforeFinish: 'Anaheim',
 
   reveals: [
-    { photo: 'board-1.jpg', line: 'five years of losing to you at everything' },
-    { photo: 'd23.jpeg',    line: 'the expo, the queue, the two of us in ears' },
-    { photo: 'board-3.jpg', line: 'you always did pick the better piece' },
-    { photo: 'disney.jpeg', line: 'same square, every time' }
+    { photo: 'vancouver.jpeg', line: 'the one we keep going back to' },
+    { photo: 'd23.jpeg',       line: 'the expo, the queue, the two of us in ears' },
+    { photo: 'disney.jpeg',    line: 'five years of losing to you at everything' },
+    { photo: 'disney.jpeg',    line: 'same square, every time' }
   ]
 };
 

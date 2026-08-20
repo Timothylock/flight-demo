@@ -62,15 +62,15 @@ const Act4 = (function () {
   /* Plan the game so it finishes where it is supposed to.
 
      Tokens alternate, A on the even turns and B on the odd ones, and the last
-     move is B joining A. Three of the landings are named: the final pair on
-     CONFIG.ACT4.finishOn, and the one before them on beforeFinish. Rather than
-     throw whole sequences away until one happens to land there, the free rolls
-     are thrown and the named ones solved -- ask pairFor for the dice that
-     cover the distance, and if no pair can, throw the free rolls again.
+     move is B joining A. The final pair of landings is CONFIG.ACT4.finishOn
+     and the earlier ones come from CONFIG.ACT4.land. Rather than throw whole
+     sequences away until one happens to land there, the free rolls are thrown
+     and the named ones solved -- ask pairFor for the dice that cover the
+     distance, and if no pair can, throw the free rolls again.
 
      Returns null if the named squares are placed somewhere the dice cannot
      reach, which is a configuration problem rather than a run of bad luck. */
-  function planToFinish(count, finish, before) {
+  function planToFinish(count, finish, land) {
     for (let attempt = 0; attempt < 600; attempt++) {
       const rolls = new Array(count);
       const landed = new Array(count);
@@ -79,7 +79,10 @@ const Act4 = (function () {
 
       for (let i = 0; i < count; i++) {
         const who = i % 2;
-        const want = (i >= count - 2) ? finish : (i === count - 3 ? before : -1);
+        /* The last two landings are the shared finish; anything `land` names
+           is fixed; the rest is left to the dice. */
+        const want = (i >= count - 2) ? finish
+                   : (i < land.length ? land[i] : -1);
         const pair = want < 0 ? [roll(), roll()] : pairFor(stepsTo(pos[who], want));
         if (!pair) { ok = false; break; }
         pos[who] = (pos[who] + pair[0] + pair[1]) % TILES;
@@ -118,9 +121,9 @@ const Act4 = (function () {
   function planRolls(count) {
     const A = CONFIG.ACT4;
     const finish = A.finishOn ? tileIndex(A.finishOn) : -1;
-    const before = A.beforeFinish ? tileIndex(A.beforeFinish) : -1;
-    if (count >= 3 && finish >= 0 && before >= 0) {
-      const aimed = planToFinish(count, finish, before);
+    const land = (A.land || []).map(tileIndex);
+    if (count >= 3 && finish >= 0 && land.indexOf(-1) < 0) {
+      const aimed = planToFinish(count, finish, land);
       if (aimed) return aimed;
     }
     return planFree(count);
@@ -879,14 +882,21 @@ const Act4 = (function () {
     if (fade <= 0.004) return;
 
     const inner = b.S - b.corner * 2;
-    const pw = inner * 0.70, ph = pw * 0.66;
     const cx = Camera.width / 2, cy = Camera.height / 2;
     const py = cy - inner * 0.05;
 
+    const img = images.get(turn.reveal.photo);
+    const pw = inner * 0.70, ph = pw * 0.66;
+
     ctx.save();
     ctx.globalAlpha = opacity * fade;
-    /* Placed like a card being laid down. */
-    const place = easeOutCubic(Math.min(1, age / (A.revealFade * 1.3)));
+    /* Placed like a card being laid down -- but only when it is a new card.
+       Both tokens finish on the same square, so the last two turns share a
+       photograph, and re-laying it would read as a stutter. */
+    const prev = turns[turns.indexOf(turn) - 1];
+    const isNewCard = !prev || prev.reveal.photo !== turn.reveal.photo;
+    const place = isNewCard
+      ? easeOutCubic(Math.min(1, age / (A.revealFade * 1.3))) : 1;
     ctx.translate(cx, py);
     ctx.rotate((1 - place) * -0.06);
     ctx.scale(0.94 + 0.06 * place, 0.94 + 0.06 * place);
@@ -900,13 +910,8 @@ const Act4 = (function () {
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
 
-    const img = images.get(turn.reveal.photo);
     if (img && img !== 'loading' && img !== 'missing') {
-      const ar = img.width / img.height, fr = pw / ph;
-      let sw = img.width, sh = img.height, sx = 0, sy = 0;
-      if (ar > fr) { sw = img.height * fr; sx = (img.width - sw) / 2; }
-      else { sh = img.width / fr; sy = (img.height - sh) / 2; }
-      ctx.drawImage(img, sx, sy, sw, sh, -pw / 2, -ph / 2, pw, ph);
+      Photo.cover(ctx, img, -pw / 2, -ph / 2, pw, ph, turn.reveal.crop);
     } else {
       ctx.fillStyle = A.colors.frameEmpty;
       ctx.fillRect(-pw / 2, -ph / 2, pw, ph);

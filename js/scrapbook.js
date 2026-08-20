@@ -119,12 +119,7 @@ const Scrapbook = (function () {
 
         const img = images.get(f.name);
         if (img && img !== 'loading' && img !== 'missing') {
-          /* Cover the frame without distorting the photograph. */
-          const ar = img.width / img.height, fr = fw / fh;
-          let sw = img.width, sh = img.height, sx = 0, sy = 0;
-          if (ar > fr) { sw = img.height * fr; sx = (img.width - sw) / 2; }
-          else { sh = img.width / fr; sy = (img.height - sh) / 2; }
-          ctx.drawImage(img, sx, sy, sw, sh, -fw / 2, -fh / 2, fw, fh);
+          Photo.cover(ctx, img, -fw / 2, -fh / 2, fw, fh);
         } else {
           /* Waiting for a photograph. */
           ctx.fillStyle = '#141414';

@@ -171,6 +171,7 @@ as a stutter the entire way out.
 | `js/act3.js` | the water: perspective, bubbles, Snell's window |
 | `js/act4.js` | the board: tiles, dice, tokens |
 | `js/finale.js` | the last photograph and the hold |
+| `js/photo.js` | one rule for cropping a photograph into a frame |
 | `js/music.js` | the score, and where it stops |
 | `js/ledboard.js` | the dot-matrix flight board |
 | `js/scrapbook.js` | photograph frames pinned to the map |
@@ -195,10 +196,11 @@ below water.
 In Act Four the dice genuinely drive the act: two of them settle on a number
 and a token counts out exactly that many squares, and whatever it lands on is
 what lights up. The arranged part is the destination. The rolls are chosen
-before the act starts so that both tokens finish on `CONFIG.ACT4.finishOn` --
-Disneyland CA -- with `beforeFinish`, Anaheim, as the landing before that pair.
-Both are named rather than indexed, so moving a tile around the board doesn't
-quietly break the ending.
+before the act starts so that the tokens land on `CONFIG.ACT4.land` in order
+-- Vancouver, then Anaheim -- and both finish on `finishOn`, Disneyland CA.
+Squares are named rather than indexed, so moving a tile around the board
+doesn't quietly break the ending, and the photographs always agree with the
+place names underneath them.
 
 The planner solves for the dice that cover each distance rather than throwing
 whole sequences away until one happens to work, but the honesty is unchanged:
@@ -207,8 +209,8 @@ further than it threw. The free landings are held to squares worth
 photographing, so nobody's holiday gets captioned "go to jail".
 
 Because the second player lands on the first player's square, the last two
-reveals share a tile, which is the point -- and why Disneyland gets two
-photographs.
+reveals share a tile, which is the point. They share the photograph too, and
+only the line changes -- re-laying the same picture would read as a stutter.
 
 Board text faces outward on all four sides, so the top row reads upside down
 exactly as it does on a real board -- that orientation is most of why a
