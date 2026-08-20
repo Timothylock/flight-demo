@@ -817,13 +817,29 @@ CONFIG.FINALE = {
   photo: 'last.jpeg',
   line: 'happy anniversary, my favourite person to go anywhere with',
 
-  fadeIn: 3.5,          // slow arrival out of the board
+  /* The board doesn't cut to black, it dissolves into it -- blackIn is how
+     long that takes, and the photograph waits for photoDelay before starting
+     up through it, so there is a moment of nothing in between. */
+  blackIn: 2.8,
+  photoDelay: 2.4,
+
+  fadeIn: 4.0,          // photograph fully up by here
   hold: 10,             // held, still
   fadeOut: 3.5,         // down into the black the radar begins from
 
-  size: 0.52,           // photograph height as a fraction of the screen
-  aspect: 1.4,          // 7:5 landscape
-  drift: 0.035,         // barely-there push in over the hold
-  lineDelay: 0.55,      // the line arrives after the photograph settles
+  size: 0.52,           // fraction of the frame's height, before it grows
+  aspect: 1.4,
+  /* It never stops moving: from a shade under its size to a shade over,
+     across the whole beat. Slow enough that you don't catch it happening. */
+  startScale: 0.90,
+  grow: 0.22,
+
+  /* The line comes in under the photograph, stays a while, and leaves -- so
+     the last thing on the ceiling is just the picture. */
+  lineAt: 3.4,
+  lineFadeIn: 1.6,
+  lineHold: 4.8,
+  lineFadeOut: 2.4,
+
   textColor: '#dfe6ee'
 };

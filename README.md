@@ -108,8 +108,8 @@ The five acts run back to back, and the whole piece is two minutes twenty-five:
 | Act Two, the scrapbook | `ACT2_SECONDS` 34 | 0:43 |
 | Act Three, the water | `ACT3_SECONDS` 20 | 1:17 |
 | Act Four, the board | `ACT4_SECONDS` 30 | 1:37 |
-| the finale | `FINALE` 3.5 + 10 + 3.5 | 2:07 |
-| the drift back to the radar | `RESET_SECONDS` 3.5 | 2:24 |
+| the finale | `FINALE` 4.0 + 10 + 3.5 | 2:07 |
+| the drift back to the radar | `RESET_SECONDS` 3.5 | 2:24.5 |
 
 Move any one of them and everything after it shifts by the same amount.
 
@@ -238,12 +238,19 @@ the game. The bolts are scheduled once when the act is built rather than rolled
 each frame, which is why the same act plays the same way twice and why none of
 it depends on the frame rate.
 
-The finale is the only moment in the piece with nothing moving. Act Four fades
-under a black field, one photograph comes up with a single line beneath it,
-and it holds -- `CONFIG.FINALE.hold`, ten seconds by default -- before fading
-out. Because it ends on black and the cold open begins on black, the reset that
-follows it doesn't fade the world out again: it brings the radar up from where
-the finale left the frame. Every other entry into the reset still fades from
+The finale runs four things on four clocks, which is what keeps it from
+reading as a slide. The board dissolves into black over `blackIn` -- it is not
+cut away, and Act Four keeps drawing underneath until the black has covered
+it, because fading them against each other at the same time was exactly what
+made the change of act feel abrupt. A beat later, at `photoDelay`, the
+photograph comes up through the black. The line arrives under it, stays
+`lineHold`, and leaves, so the last five seconds are the picture on its own.
+And the photograph grows the whole way, `startScale` to `startScale + grow`,
+slowly enough that you never catch it happening.
+
+Because it ends on black and the cold open begins on black, the reset that
+follows doesn't fade the world out again: it brings the radar up from where the
+finale left the frame. Every other entry into the reset still fades from
 whatever was lit, which is what `resetFrom` in `js/sequence.js` remembers.
 
 Two details worth knowing if you change things:

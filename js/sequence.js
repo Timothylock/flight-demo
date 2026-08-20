@@ -362,10 +362,12 @@ const Sequence = (function () {
 
     if (state.phase === 'FINALE') {
       const t = state.t;
-      /* The board gives way slowly; the photograph is already coming up
-         underneath it. */
+      /* The board keeps drawing until the finale's black has covered it, and
+         only then stops -- fading them against each other at the same time
+         made the change of act read as a cut. */
       state.finale = 1;
-      state.act4 = 1 - smooth(ramp(t, 0.0, CONFIG.FINALE.fadeIn * 0.75));
+      state.act4 = 1 - smooth(ramp(t, CONFIG.FINALE.blackIn,
+                                      CONFIG.FINALE.blackIn + 0.5));
       state.act3 = 0;
       state.act2 = 0;
       state.board = 0;

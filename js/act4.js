@@ -885,8 +885,17 @@ const Act4 = (function () {
     const cx = Camera.width / 2, cy = Camera.height / 2;
     const py = cy - inner * 0.05;
 
+    /* The card takes the photograph's own shape. There is room to spare inside
+       a board, and cropping a portrait to a fixed landscape window was taking
+       the top off the castle -- so a tall picture gets a tall card. */
     const img = images.get(turn.reveal.photo);
-    const pw = inner * 0.70, ph = pw * 0.66;
+    const boxW = inner * 0.70, boxH = inner * 0.60;
+    let pw = boxW, ph = boxH;
+    if (img && img.width) {
+      const ar = img.width / img.height;
+      pw = Math.min(boxW, boxH * ar);
+      ph = pw / ar;
+    }
 
     ctx.save();
     ctx.globalAlpha = opacity * fade;
@@ -911,7 +920,7 @@ const Act4 = (function () {
     ctx.shadowOffsetY = 0;
 
     if (img && img !== 'loading' && img !== 'missing') {
-      Photo.cover(ctx, img, -pw / 2, -ph / 2, pw, ph, turn.reveal.crop);
+      ctx.drawImage(img, -pw / 2, -ph / 2, pw, ph);
     } else {
       ctx.fillStyle = A.colors.frameEmpty;
       ctx.fillRect(-pw / 2, -ph / 2, pw, ph);

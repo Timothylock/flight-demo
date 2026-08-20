@@ -5,8 +5,12 @@
    nothing moving -- no aircraft, no bubbles, no dice -- which is what makes it
    land after twenty minutes of motion.
 
-   Three parts: a slow fade up out of whatever came before, a long hold, and a
-   fade down into the black the radar starts from. */
+   Four things happen, on their own clocks rather than together, which is what
+   keeps it from feeling like a slide. The board dissolves into black. A beat
+   later the photograph comes up through it. The line arrives under it, stays a
+   while, and leaves -- so the last thing on the ceiling is just the picture.
+   And the photograph is growing the whole time, slowly enough that you never
+   catch it happening. */
 
 const Finale = (function () {
 
@@ -29,12 +33,42 @@ const Finale = (function () {
     return F.fadeIn + F.hold + F.fadeOut;
   }
 
-  /* 0 while arriving, 1 across the hold, back to 0 on the way out. */
+  /* The photograph: nothing until photoDelay, up by fadeIn, held, then out. */
   function level(t) {
     const F = CONFIG.FINALE;
-    if (t < F.fadeIn) return smoothstep(t / F.fadeIn);
-    if (t < F.fadeIn + F.hold) return 1;
-    return 1 - smoothstep((t - F.fadeIn - F.hold) / F.fadeOut);
+    const outAt = F.fadeIn + F.hold;
+    if (t < F.photoDelay) return 0;
+    if (t < F.fadeIn) {
+      return smoothstep((t - F.photoDelay) / Math.max(0.1, F.fadeIn - F.photoDelay));
+    }
+    if (t < outAt) return 1;
+    return 1 - smoothstep((t - outAt) / F.fadeOut);
+  }
+
+  /* The black the board dissolves into. Its own ramp, because the photograph
+     must not have to wait for the board to finish leaving. */
+  function blackLevel(t) {
+    const F = CONFIG.FINALE;
+    return smoothstep(t / Math.max(0.1, F.blackIn));
+  }
+
+  /* The line: in, a good while, out -- and gone before the photograph is. */
+  function lineLevel(t) {
+    const F = CONFIG.FINALE;
+    if (t < F.lineAt) return 0;
+    const up = smoothstep((t - F.lineAt) / Math.max(0.1, F.lineFadeIn));
+    const outAt = F.lineAt + F.lineFadeIn + F.lineHold;
+    if (t < outAt) return up;
+    return 1 - smoothstep((t - outAt) / Math.max(0.1, F.lineFadeOut));
+  }
+
+  /* Always moving, never hurrying: a shade under its size to a shade over,
+     across the whole beat. Slightly eased at the start so it doesn't lurch
+     the instant it appears. */
+  function growth(t) {
+    const F = CONFIG.FINALE;
+    const k = Math.min(1, Math.max(0, t / duration()));
+    return F.startScale + F.grow * Math.pow(k, 0.85);
   }
 
   function smoothstep(x) {
@@ -45,30 +79,29 @@ const Finale = (function () {
   function draw(ctx, t, opacity) {
     const F = CONFIG.FINALE;
     const a = level(t) * opacity;
-    if (a <= 0.004) return;
+    const black = blackLevel(t) * opacity;
+    if (a <= 0.004 && black <= 0.004) return;
 
     const cx = Camera.width / 2, cy = Camera.height / 2;
     const scale = Math.min(Camera.width, Camera.height) / 1080;
 
     ctx.save();
 
-    /* Black underneath, so the act before it is genuinely gone rather than
-       showing through. */
-    ctx.globalAlpha = opacity;
+    /* The board dissolving away, rather than being cut away. */
+    ctx.globalAlpha = black;
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, Camera.width, Camera.height);
 
-    /* A very slow drift inwards over the hold -- barely perceptible, but it
-       keeps the frame from looking frozen. */
-    const creep = 1 + Math.min(1, t / duration()) * F.drift;
+    if (a <= 0.004) { ctx.restore(); return; }
 
+    const grew = growth(t);
     const h = Camera.height * F.size;
     const w = h * F.aspect;
     const py = cy - Camera.height * 0.045;
 
     ctx.globalAlpha = a;
     ctx.translate(cx, py);
-    ctx.scale(creep, creep);
+    ctx.scale(grew, grew);
 
     ctx.shadowColor = 'rgba(0,0,0,0.8)';
     ctx.shadowBlur = 46 * scale;
@@ -102,20 +135,25 @@ const Finale = (function () {
     ctx.strokeRect(-w / 2, -h / 2, w, h);
     ctx.restore();
 
-    /* The line, arriving a moment after the photograph has settled. */
-    const lineIn = smoothstep((t - F.fadeIn * F.lineDelay) / Math.max(0.1, F.fadeIn * 0.9));
-    ctx.save();
-    ctx.globalAlpha = a * lineIn;
-    ctx.textAlign = 'center';
-    ctx.fillStyle = F.textColor;
-    ctx.font = 'italic ' + (30 * scale) + 'px Georgia, "Times New Roman", serif';
-    ctx.shadowColor = 'rgba(0,0,0,0.9)';
-    ctx.shadowBlur = 16 * scale;
-    ctx.fillText(F.line, cx, py + (h / 2) + 62 * scale);
-    ctx.restore();
+    /* The line sits under the photograph and keeps sitting under it as it
+       grows, then goes, leaving the picture on its own. */
+    const lineA = a * lineLevel(t);
+    if (lineA > 0.004) {
+      ctx.save();
+      ctx.globalAlpha = lineA;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = F.textColor;
+      ctx.font = 'italic ' + (30 * scale) + 'px Georgia, "Times New Roman", serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.9)';
+      ctx.shadowBlur = 16 * scale;
+      ctx.fillText(F.line, cx, py + (h * grew / 2) + 62 * scale);
+      ctx.restore();
+    }
   }
 
   function reset() { }
 
-  return { build: build, draw: draw, duration: duration, reset: reset };
+  return { build: build, draw: draw, duration: duration, reset: reset,
+           level: level, lineLevel: lineLevel, blackLevel: blackLevel,
+           growth: growth };
 })();
